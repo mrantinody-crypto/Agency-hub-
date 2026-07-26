@@ -66,6 +66,8 @@ separate step. Tell me when you're ready for that and I'll build it as a v3.
 From now on: any time I update the code and push it to GitHub, Vercel redeploys the live
 site automatically.
 
+<!-- Trigger redeploy -->
+
 ---
 
 ## Part 5 — Make yourself admin (2 min)
