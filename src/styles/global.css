@@ -6,10 +6,16 @@
 html, body, #root { height: 100%; }
 
 body {
-  background: #ECECEE;
-  color: #1D1D1F;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  background: #FAFAF8;
+  color: #18181B;
+  font-family: Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  background: #17171A;
+  color: #F5F5F0;
 }
 
 ::selection { background: #0A84FF; color: #fff; }
@@ -19,23 +25,60 @@ body {
 ::-webkit-scrollbar-thumb { background: #D9D9DE; border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-thumb:hover { background: #C3C3C9; background-clip: padding-box; }
 
+.dark ::-webkit-scrollbar-thumb { background: #303035; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3B3B42; }
+
+.bg-canvas { background-color: #FAFAF8; }
+.dark .bg-canvas { background-color: #17171A; }
+
+.bg-sidebar { background-color: #F4F3EF; }
+.dark .bg-sidebar { background-color: #1F1F23; }
+
+.bg-card, .bg-white { background-color: #FFFFFF; }
+.dark .bg-card, .dark .bg-white { background-color: #232327; }
+
+.text-ink-primary { color: #18181B; }
+.dark .text-ink-primary { color: #F5F5F0; }
+
+.text-ink-secondary { color: #5E5E66; }
+.dark .text-ink-secondary { color: #9B9BA3; }
+
+.text-ink-tertiary { color: #8E8E96; }
+.dark .text-ink-tertiary { color: #7C7C87; }
+
+.border-hairline { border-color: #D9D9DE; }
+.dark .border-hairline, .dark .divide-hairline > :not([hidden]) ~ :not([hidden]) { border-color: #303035; }
+
 .label-caps {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #9A9AA0;
+  color: #8E8E96;
 }
 
+.dark .label-caps { color: #7C7C87; }
+
 .mac-window {
-  background: #fff;
-  border-radius: 12px;
+  background: #FFFFFF;
+  border-radius: 16px;
   border: 1px solid #D9D9DE;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.dark .mac-window {
+  background: #232327;
+  border-color: #303035;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.24), 0 10px 30px rgba(0,0,0,0.28);
 }
 
 .traffic-lights { display: flex; gap: 8px; align-items: center; }
-.traffic-dot { width: 12px; height: 12px; border-radius: 50%; }
+.traffic-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.35);
+}
 
 .focus-ring:focus-visible {
   outline: 2px solid #0A84FF;

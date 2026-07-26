@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import BrandWorkspace from '../components/BrandWorkspace'
 import StatusDot from '../components/StatusDot'
+import AccountPanel from '../components/AccountPanel'
 
 // Shared by Designers (canEdit) and Clients (read-only) — each only ever sees
 // the brands an admin has explicitly given them access to.
 export default function MemberDashboard() {
   const { profile, user, signOut, isTeam } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [clients, setClients] = useState([])
   const [view, setView] = useState('today')
   const [loading, setLoading] = useState(true)
@@ -33,12 +36,14 @@ export default function MemberDashboard() {
             <span className="traffic-dot bg-traffic-yellow" />
             <span className="traffic-dot bg-traffic-green" />
           </div>
-          <p className="text-[13px] font-medium text-ink-primary">{profile?.full_name || 'Welcome'}</p>
+          <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
+          <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Welcome'}</p>
           <p className="label-caps mt-0.5">{isTeam ? 'Designer' : 'Client'}</p>
         </div>
 
-        <nav className="px-3 py-3">
+        <nav className="px-3 py-3 space-y-0.5">
           <SidebarItem active={view === 'today'} onClick={() => setView('today')} label="Today" icon="☀️" />
+          <SidebarItem active={view === 'account'} onClick={() => setView('account')} label="Account" icon="👤" />
         </nav>
 
         <div className="px-5 pt-3 pb-1">
@@ -59,7 +64,15 @@ export default function MemberDashboard() {
           ))}
         </div>
 
-        <div className="p-3 border-t border-hairline">
+        <div className="p-3 border-t border-hairline space-y-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-hairline bg-white/80 dark:bg-[#232327] px-3 py-2 text-[13px] text-ink-secondary transition-shadow hover:shadow-md"
+          >
+            <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
           <button onClick={signOut} className="w-full text-[13px] text-ink-secondary hover:text-ink-primary py-1">
             Sign out
           </button>
@@ -76,6 +89,8 @@ export default function MemberDashboard() {
           </div>
         ) : view === 'today' ? (
           <MyToday clients={clients} userId={user.id} />
+        ) : view === 'account' ? (
+          <AccountPanel />
         ) : selected ? (
           <BrandWorkspace client={selected} canEdit={isTeam} />
         ) : null}
@@ -88,8 +103,8 @@ function SidebarItem({ active, onClick, label, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-2.5 text-[13px] transition-colors ${
-        active ? 'bg-white shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/60'
+      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-[13px] transition-all ${
+        active ? 'bg-white dark:bg-[#232327] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/70 dark:hover:bg-[#232327] hover:shadow-sm'
       }`}
     >
       <span>{icon}</span>{label}
@@ -124,8 +139,8 @@ function MyToday({ clients, userId }) {
   return (
     <div className="max-w-3xl space-y-6">
       <div>
-        <h1 className="text-[22px] font-semibold text-ink-primary">Today</h1>
-        <p className="text-ink-secondary text-[13px] mt-0.5">
+        <h1 className="font-display text-[28px] text-ink-primary">Today</h1>
+        <p className="text-ink-secondary text-[13px] mt-1">
           {clients.length} brand{clients.length === 1 ? '' : 's'} · {open.length} open for you
         </p>
       </div>
@@ -155,7 +170,7 @@ function TaskGroup({ title, items, tone }) {
       ) : (
         <div className="mac-window divide-y divide-hairline">
           {items.map((t) => (
-            <div key={t.id} className="flex items-center justify-between px-4 py-3">
+            <div key={t.id} className="flex items-center justify-between px-5 py-4">
               <div>
                 <p className="text-ink-primary text-[14px]">{t.title}</p>
                 <p className="text-ink-tertiary text-[12px]">{t.clients?.name} {t.due_date ? `· due ${t.due_date}` : ''}</p>

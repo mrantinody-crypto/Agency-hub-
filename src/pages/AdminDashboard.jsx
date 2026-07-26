@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useTheme } from '../contexts/ThemeContext'
 import BrandWorkspace from '../components/BrandWorkspace'
 import StatusDot from '../components/StatusDot'
 import TeamAccess from '../components/TeamAccess'
+import AccountPanel from '../components/AccountPanel'
 
 export default function AdminDashboard() {
   const { profile, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [clients, setClients] = useState([])
-  const [view, setView] = useState('today') // 'today' | 'team' | client.id
+  const [view, setView] = useState('today') // 'today' | 'team' | 'account' | client.id
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', industry: '', website: '', instagram: '' })
 
@@ -39,13 +42,15 @@ export default function AdminDashboard() {
             <span className="traffic-dot bg-traffic-yellow" />
             <span className="traffic-dot bg-traffic-green" />
           </div>
-          <p className="text-[13px] font-medium text-ink-primary">{profile?.full_name || 'Admin'}</p>
+          <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
+          <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Admin'}</p>
           <p className="label-caps mt-0.5">Owner</p>
         </div>
 
         <nav className="px-3 py-3 space-y-0.5">
           <SidebarItem active={view === 'today'} onClick={() => setView('today')} label="Today" icon="☀️" />
           <SidebarItem active={view === 'team'} onClick={() => setView('team')} label="Team & Access" icon="🔑" />
+          <SidebarItem active={view === 'account'} onClick={() => setView('account')} label="Account" icon="👤" />
         </nav>
 
         <div className="px-5 pt-3 pb-1">
@@ -68,8 +73,16 @@ export default function AdminDashboard() {
 
         <div className="p-3 border-t border-hairline space-y-2">
           <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-hairline bg-white/80 dark:bg-[#232327] px-3 py-2 text-[13px] text-ink-secondary transition-shadow hover:shadow-md"
+          >
+            <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
+            {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
+          <button
             onClick={() => setShowForm(!showForm)}
-            className="w-full text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-md py-2 hover:bg-sysblue/10 transition-colors"
+            className="w-full text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-lg py-2 hover:bg-sysblue/10 transition-colors"
           >
             + new brand
           </button>
@@ -94,8 +107,9 @@ export default function AdminDashboard() {
 
         {view === 'today' && <TodayPanel clients={clients} />}
         {view === 'team' && <TeamAccess clients={clients} />}
+        {view === 'account' && <AccountPanel />}
         {selected && <BrandWorkspace client={selected} canEdit />}
-        {!selected && view !== 'today' && view !== 'team' && (
+        {!selected && view !== 'today' && view !== 'team' && view !== 'account' && (
           <p className="text-ink-secondary text-[14px]">Select a brand from the sidebar, or add your first one.</p>
         )}
       </main>
@@ -107,8 +121,8 @@ function SidebarItem({ active, onClick, label, icon }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-2.5 rounded-md flex items-center gap-2.5 text-[13px] transition-colors ${
-        active ? 'bg-white shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/60'
+      className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-[13px] transition-all ${
+        active ? 'bg-white dark:bg-[#232327] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/70 dark:hover:bg-[#232327] hover:shadow-sm'
       }`}
     >
       <span>{icon}</span>{label}
@@ -123,7 +137,7 @@ function Field({ label, value, onChange }) {
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-canvas border border-hairline rounded-md px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
+        className="w-full bg-canvas dark:bg-[#232327] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
       />
     </div>
   )
@@ -154,8 +168,8 @@ function TodayPanel({ clients }) {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-[22px] font-semibold text-ink-primary">Today</h1>
-        <p className="text-ink-secondary text-[13px] mt-0.5">
+        <h1 className="font-display text-[28px] text-ink-primary">Today</h1>
+        <p className="text-ink-secondary text-[13px] mt-1">
           {clients.length} brand{clients.length === 1 ? '' : 's'} · {tasks.filter((t) => t.status !== 'done').length} open items
         </p>
       </div>
@@ -187,7 +201,7 @@ function TaskGroup({ title, items, tone }) {
       ) : (
         <div className="mac-window divide-y divide-hairline">
           {items.map((t) => (
-            <div key={t.id} className="flex items-center justify-between px-4 py-3">
+            <div key={t.id} className="flex items-center justify-between px-5 py-4">
               <div>
                 <p className="text-ink-primary text-[14px]">{t.title}</p>
                 <p className="text-ink-tertiary text-[12px]">

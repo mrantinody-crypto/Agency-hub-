@@ -10,24 +10,24 @@ export default function BrandWorkspace({ client, canEdit }) {
 
   return (
     <div className="mac-window overflow-hidden">
-      <div className="px-5 py-3.5 border-b border-hairline flex items-center gap-3 bg-sidebar">
+      <div className="px-5 py-4 border-b border-hairline flex items-center gap-3 bg-sidebar">
         <div className="traffic-lights">
           <span className="traffic-dot bg-traffic-red" />
           <span className="traffic-dot bg-traffic-yellow" />
           <span className="traffic-dot bg-traffic-green" />
         </div>
-        <span className="text-[13px] font-medium text-ink-primary">{client.name}</span>
+        <span className="font-display text-[20px] text-ink-primary">{client.name}</span>
         <span className="ml-auto"><StatusDot status={client.status} /></span>
       </div>
 
       <div className="px-5 pt-4">
-        <div className="inline-flex bg-canvas border border-hairline rounded-lg p-0.5">
+        <div className="inline-flex bg-canvas dark:bg-[#232327] border border-hairline rounded-lg p-0.5">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`text-[13px] px-3.5 py-1.5 rounded-md transition-colors ${
-                tab === t ? 'bg-white shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:text-ink-primary'
+              className={`text-[13px] px-3.5 py-1.5 rounded-md transition-all ${
+                tab === t ? 'bg-white dark:bg-[#232327] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:text-ink-primary'
               }`}
             >
               {t}
@@ -36,7 +36,7 @@ export default function BrandWorkspace({ client, canEdit }) {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-6">
         {tab === 'Info' && <Info client={client} canEdit={canEdit} />}
         {tab === 'Calendar' && <Calendar clientId={client.id} canEdit={canEdit} />}
         {tab === 'Scripts' && <Scripts clientId={client.id} canEdit={canEdit} />}
@@ -49,7 +49,7 @@ export default function BrandWorkspace({ client, canEdit }) {
 
 function EmptyState({ text }) {
   return (
-    <div className="border border-dashed border-hairline rounded-card py-10 text-center">
+    <div className="border border-dashed border-hairline rounded-card py-10 text-center bg-canvas/50">
       <p className="text-ink-secondary text-[13px]">{text}</p>
     </div>
   )
@@ -58,7 +58,7 @@ function EmptyState({ text }) {
 function Row({ label, value }) {
   if (!value) return null
   return (
-    <div className="flex px-4 py-3 gap-4">
+    <div className="flex px-5 py-4 gap-4">
       <span className="label-caps w-36 shrink-0 pt-0.5">{label}</span>
       <span className="text-ink-primary text-[14px] break-all">{value}</span>
     </div>
@@ -102,7 +102,7 @@ function Info({ client }) {
       {client.login_notes && (
         <div>
           <p className="label-caps mb-2 px-1">Notes</p>
-          <div className="border border-hairline rounded-card bg-white p-4 text-[14px] text-ink-primary whitespace-pre-wrap">
+          <div className="border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-5 text-[14px] text-ink-primary whitespace-pre-wrap">
             {client.login_notes}
           </div>
         </div>
@@ -120,7 +120,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, full }) {
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-canvas border border-hairline rounded-md px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none w-full"
+        className="bg-canvas dark:bg-[#232327] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none w-full"
       />
     </div>
   )
@@ -128,7 +128,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, full }) {
 
 function AddButton({ label, onClick }) {
   return (
-    <button onClick={onClick} className="text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-md px-3 py-1.5 hover:bg-sysblue/10 transition-colors">
+    <button onClick={onClick} className="text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-lg px-3 py-1.5 hover:bg-sysblue/10 transition-colors">
       {label}
     </button>
   )
@@ -167,7 +167,7 @@ function Calendar({ clientId, canEdit }) {
         <div className="mb-4">
           <AddButton label="+ add to calendar" onClick={() => setShowForm(!showForm)} />
           {showForm && (
-            <form onSubmit={addEvent} className="mt-3 border border-hairline rounded-card bg-white p-4 flex flex-wrap gap-3 items-end">
+            <form onSubmit={addEvent} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
               <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
               <Field label="Platform" value={form.platform} onChange={(v) => setForm({ ...form, platform: v })} placeholder="Instagram" />
               <Field label="Date" type="date" value={form.scheduled_date} onChange={(v) => setForm({ ...form, scheduled_date: v })} />
@@ -179,7 +179,7 @@ function Calendar({ clientId, canEdit }) {
       {events.length === 0 ? <EmptyState text="Nothing on the calendar yet." /> : (
         <div className="space-y-2">
           {events.map((ev) => (
-            <div key={ev.id} className="flex items-center justify-between border border-hairline rounded-card bg-white px-4 py-3">
+            <div key={ev.id} className="flex items-center justify-between border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
               <div>
                 <p className="text-ink-primary text-[14px] font-medium">{ev.title}</p>
                 <p className="text-ink-tertiary text-[12px]">{ev.scheduled_date} · {ev.platform || '—'}</p>
@@ -219,7 +219,7 @@ function Scripts({ clientId, canEdit }) {
         <div className="mb-4">
           <AddButton label="+ add script / copy" onClick={() => setShowForm(!showForm)} />
           {showForm && (
-            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white p-4 space-y-3">
+            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 space-y-3">
               <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} full />
               <div>
                 <label className="label-caps block mb-1.5">Content</label>
@@ -237,7 +237,7 @@ function Scripts({ clientId, canEdit }) {
       {items.length === 0 ? <EmptyState text="No scripts or copy saved yet." /> : (
         <div className="space-y-2">
           {items.map((it) => (
-            <details key={it.id} className="border border-hairline rounded-card bg-white px-4 py-3">
+            <details key={it.id} className="border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
               <summary className="cursor-pointer flex items-center justify-between list-none">
                 <span className="text-ink-primary text-[14px] font-medium">{it.title}</span>
                 <span className="label-caps">{it.content_type}</span>
@@ -282,7 +282,7 @@ function Resources({ clientId, canEdit }) {
         <div className="mb-4">
           <AddButton label="+ add link" onClick={() => setShowForm(!showForm)} />
           {showForm && (
-            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white p-4 flex flex-wrap gap-3 items-end">
+            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
               <Field label="Label" value={form.label} onChange={(v) => setForm({ ...form, label: v })} placeholder="Content calendar sheet" />
               <Field label="URL" value={form.url} onChange={(v) => setForm({ ...form, url: v })} placeholder="https://docs.google.com/…" />
               <div>
@@ -306,7 +306,7 @@ function Resources({ clientId, canEdit }) {
         <div className="space-y-2">
           {items.map((r) => (
             <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
-              className="flex items-center gap-3 border border-hairline rounded-card bg-white px-4 py-3 hover:border-sysblue/40 transition-colors">
+              className="flex items-center gap-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 hover:border-sysblue/40 hover:shadow-md transition-all">
               <span className="text-lg">{ICON[r.resource_type]}</span>
               <span className="text-ink-primary text-[14px] font-medium">{r.label}</span>
               <span className="ml-auto text-ink-tertiary text-[12px] truncate max-w-[220px]">{r.url}</span>
@@ -364,7 +364,7 @@ function Tasks({ clientId, canEdit }) {
       <div className="mb-4">
         <AddButton label="+ add task" onClick={() => setShowForm(!showForm)} />
         {showForm && (
-          <form onSubmit={addTask} className="mt-3 border border-hairline rounded-card bg-white p-4 flex flex-wrap gap-3 items-end">
+          <form onSubmit={addTask} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
             <Field label="Task" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
             <Field label="Due" type="date" value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} />
             <div>
@@ -385,7 +385,7 @@ function Tasks({ clientId, canEdit }) {
       {tasks.length === 0 ? <EmptyState text="No tasks yet — add the first one." /> : (
         <div className="space-y-2">
           {tasks.map((t) => (
-            <div key={t.id} className="flex items-center justify-between border border-hairline rounded-card bg-white px-4 py-3">
+            <div key={t.id} className="flex items-center justify-between border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
               <div>
                 <p className="text-ink-primary text-[14px] font-medium">{t.title}</p>
                 <p className="text-ink-tertiary text-[12px]">

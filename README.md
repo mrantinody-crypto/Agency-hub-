@@ -1,4 +1,4 @@
-# Agency Hub
+# Anti Agency Hub
 
 A private, macOS-styled control panel for managing unlimited client brands — contact info,
 socials, calendar, scripts, linked docs/sheets, and tasks — with three access levels:
@@ -43,7 +43,7 @@ separate step. Tell me when you're ready for that and I'll build it as a v3.
    ```
    git init
    git add .
-   git commit -m "Agency Hub"
+   git commit -m "Anti Agency Hub"
    git branch -M main
    git remote add origin https://github.com/YOUR-USERNAME/agency-hub.git
    git push -u origin main

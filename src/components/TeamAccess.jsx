@@ -41,7 +41,7 @@ export default function TeamAccess({ clients }) {
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-[22px] font-semibold text-ink-primary mb-1">Team & Access</h1>
+      <h1 className="font-display text-[28px] text-ink-primary mb-1">Team & Access</h1>
       <p className="text-ink-secondary text-[13px] mb-6">
         Ask people to create an account on the site first — they'll show up here. Then set their role
         and tick which brands they can see. Nobody sees a brand unless it's ticked.
@@ -65,7 +65,7 @@ export default function TeamAccess({ clients }) {
             </thead>
             <tbody>
               {people.map((p) => (
-                <tr key={p.id} className="border-b border-hairline last:border-0">
+                <tr key={p.id} className="border-b border-hairline last:border-0 hover:bg-canvas/60 dark:hover:bg-[#232327]">
                   <td className="px-4 py-3">
                     <p className="text-ink-primary font-medium">{p.full_name || 'Unnamed'}</p>
                     <p className="text-ink-tertiary text-[12px]">{p.email}</p>
@@ -74,7 +74,7 @@ export default function TeamAccess({ clients }) {
                     <select
                       value={p.role}
                       onChange={(e) => setRole(p.id, e.target.value)}
-                      className="bg-canvas border border-hairline rounded-md px-2 py-1 text-[13px] focus-ring outline-none"
+                      className="bg-canvas dark:bg-[#232327] border border-hairline rounded-md px-2 py-1 text-[13px] focus-ring outline-none"
                     >
                       <option value="client">Client</option>
                       <option value="team">Designer</option>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function Login() {
   const [mode, setMode] = useState('signin')
@@ -10,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const navigate = useNavigate()
+  const { theme, toggleTheme } = useTheme()
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -36,8 +38,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center px-4">
+    <div className="min-h-screen bg-canvas flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
+        <div className="mb-4 flex justify-end">
+          <button type="button" onClick={toggleTheme} className="rounded-full border border-hairline bg-white/80 px-3 py-1.5 text-[12px] text-ink-secondary shadow-sm">
+            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+          </button>
+        </div>
         <div className="mac-window shadow-pop overflow-hidden">
           <div className="px-5 py-3.5 border-b border-hairline flex items-center gap-2 bg-sidebar rounded-t-window">
             <div className="traffic-lights">
@@ -45,7 +52,7 @@ export default function Login() {
               <span className="traffic-dot bg-traffic-yellow" />
               <span className="traffic-dot bg-traffic-green" />
             </div>
-            <span className="text-[13px] text-ink-secondary mx-auto pr-10">Agency Hub — Sign in</span>
+            <span className="text-[13px] text-ink-secondary mx-auto pr-10">Anti Agency Hub — Sign in</span>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -87,7 +94,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full bg-sysblue hover:bg-sysbluedeep text-white text-[14px] font-medium rounded-md py-2 transition-colors disabled:opacity-60"
+              className="w-full bg-sysblue hover:bg-sysbluedeep text-white text-[14px] font-medium rounded-lg py-2 transition-colors disabled:opacity-60"
             >
               {busy ? 'Working…' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </button>

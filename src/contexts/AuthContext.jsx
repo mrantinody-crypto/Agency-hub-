@@ -13,6 +13,12 @@ export function AuthProvider({ children }) {
     setProfile(data || null)
   }
 
+  async function refreshProfile(userId) {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    setProfile(data || null)
+    return data || null
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
@@ -41,6 +47,7 @@ export function AuthProvider({ children }) {
     isTeam: profile?.role === 'team',
     isClient: profile?.role === 'client',
     signOut: () => supabase.auth.signOut(),
+    refreshProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
