@@ -6,20 +6,62 @@ import BrandWorkspace from '../components/BrandWorkspace'
 import StatusDot from '../components/StatusDot'
 import TeamAccess from '../components/TeamAccess'
 import AccountPanel from '../components/AccountPanel'
+import HomeHeader from '../components/HomeHeader'
+import NotificationBell from '../components/NotificationBell'
+
+const PALETTE = ['#0A84FF', '#6C4CE0', '#22C55E', '#F59E0B', '#EC4899', '#14B8A6', '#6366F1', '#F97316']
+
+function getBrandColor(name) {
+  const seed = String(name || 'brand').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  return PALETTE[seed % PALETTE.length]
+}
+
+function getDaysRemaining(dateStr) {
+  if (!dateStr) return null
+  const today = new Date()
+  const due = new Date(`${dateStr}T00:00:00`)
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  return Math.round((due - start) / 86400000)
+}
+
+function formatDueLabel(dateStr) {
+  const days = getDaysRemaining(dateStr)
+  if (days === null) return 'No due date'
+  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} overdue`
+  if (days === 0) return 'Due today'
+  if (days === 1) return 'In 1 day'
+  return `In ${days} days`
+}
 
 export default function AdminDashboard() {
   const { profile, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const [clients, setClients] = useState([])
-  const [view, setView] = useState('today') // 'today' | 'team' | 'account' | client.id
+  const [tasks, setTasks] = useState([])
+  const [tasksLoading, setTasksLoading] = useState(true)
+  const [view, setView] = useState('today')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ name: '', industry: '', website: '', instagram: '' })
 
-  async function load() {
+  async function loadClients() {
     const { data } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
     setClients(data || [])
   }
-  useEffect(() => { load() }, [])
+
+  async function loadTasks() {
+    setTasksLoading(true)
+    const { data } = await supabase
+      .from('tasks')
+      .select('*, clients(name), profiles:assigned_to(full_name)')
+      .order('due_date', { ascending: true, nullsFirst: false })
+    setTasks(data || [])
+    setTasksLoading(false)
+  }
+
+  useEffect(() => {
+    loadClients()
+    loadTasks()
+  }, [])
 
   async function addClient(e) {
     e.preventDefault()
@@ -27,7 +69,7 @@ export default function AdminDashboard() {
     const { data } = await supabase.from('clients').insert(form).select().single()
     setForm({ name: '', industry: '', website: '', instagram: '' })
     setShowForm(false)
-    await load()
+    await loadClients()
     if (data) setView(data.id)
   }
 
@@ -42,9 +84,14 @@ export default function AdminDashboard() {
             <span className="traffic-dot bg-traffic-yellow" />
             <span className="traffic-dot bg-traffic-green" />
           </div>
-          <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
-          <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Admin'}</p>
-          <p className="label-caps mt-0.5">Owner</p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
+              <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Admin'}</p>
+              <p className="label-caps mt-0.5">Owner</p>
+            </div>
+            <NotificationBell tasks={tasks} />
+          </div>
         </div>
 
         <nav className="px-3 py-3 space-y-0.5">
@@ -57,18 +104,25 @@ export default function AdminDashboard() {
           <p className="label-caps">Brands</p>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-3">
-          {clients.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setView(c.id)}
-              className={`w-full text-left px-3 py-2.5 rounded-md flex items-center justify-between mb-0.5 transition-colors ${
-                view === c.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'
-              }`}
-            >
-              <span className="text-ink-primary text-[13px]">{c.name}</span>
-              <StatusDot status={c.status} />
-            </button>
-          ))}
+          {clients.map((c) => {
+            const accent = getBrandColor(c.name)
+            return (
+              <button
+                key={c.id}
+                onClick={() => setView(c.id)}
+                className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between mb-1.5 transition-all border-l-4 ${view === c.id ? 'bg-white shadow-sm' : 'hover:bg-white/60'}`}
+                style={view === c.id ? { borderLeftColor: accent } : { borderLeftColor: 'transparent' }}
+              >
+                <span className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-semibold text-white shadow-sm" style={{ backgroundColor: accent }}>
+                    {c.name?.charAt(0)?.toUpperCase() || 'B'}
+                  </span>
+                  <span className="text-ink-primary text-[13px]">{c.name}</span>
+                </span>
+                <StatusDot status={c.status} />
+              </button>
+            )
+          })}
         </div>
 
         <div className="p-3 border-t border-hairline space-y-2">
@@ -105,7 +159,7 @@ export default function AdminDashboard() {
           </form>
         )}
 
-        {view === 'today' && <TodayPanel clients={clients} />}
+        {view === 'today' && <TodayPanel clients={clients} tasks={tasks} loading={tasksLoading} onRefreshTasks={loadTasks} profileName={profile?.full_name || 'there'} />}
         {view === 'team' && <TeamAccess clients={clients} />}
         {view === 'account' && <AccountPanel />}
         {selected && <BrandWorkspace client={selected} canEdit />}
@@ -143,75 +197,125 @@ function Field({ label, value, onChange }) {
   )
 }
 
-function TodayPanel({ clients }) {
-  const [tasks, setTasks] = useState([])
-  const [loading, setLoading] = useState(true)
+function TodayPanel({ clients, tasks, loading, onRefreshTasks, profileName }) {
+  const [completingIds, setCompletingIds] = useState([])
   const todayStr = new Date().toISOString().slice(0, 10)
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('tasks')
-        .select('*, clients(name), profiles:assigned_to(full_name)')
-        .order('due_date', { ascending: true, nullsFirst: false })
-      setTasks(data || [])
-      setLoading(false)
-    }
-    load()
-  }, [])
+  async function completeTask(task) {
+    setCompletingIds((prev) => [...prev, task.id])
+    await supabase.from('tasks').update({ status: 'done' }).eq('id', task.id)
+    window.setTimeout(() => {
+      setCompletingIds((prev) => prev.filter((id) => id !== task.id))
+      onRefreshTasks()
+    }, 220)
+  }
 
   const overdue = tasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date < todayStr)
   const dueToday = tasks.filter((t) => t.status !== 'done' && t.due_date === todayStr)
-  const pending = tasks.filter((t) => t.status !== 'done' && (!t.due_date || t.due_date > todayStr))
-  const doneRecent = tasks.filter((t) => t.status === 'done').slice(0, 8)
+  const upcoming = tasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date > todayStr).sort((a, b) => a.due_date.localeCompare(b.due_date))
+
+  const urgentGroups = [...overdue, ...dueToday].reduce((acc, task) => {
+    const key = task.clients?.name || 'Unassigned'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(task)
+    return acc
+  }, {})
+
+  const urgentEntries = Object.entries(urgentGroups).sort((a, b) => a[0].localeCompare(b[0]))
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
-        <h1 className="font-display text-[28px] text-ink-primary">Today</h1>
-        <p className="text-ink-secondary text-[13px] mt-1">
-          {clients.length} brand{clients.length === 1 ? '' : 's'} · {tasks.filter((t) => t.status !== 'done').length} open items
+    <div className="max-w-5xl space-y-6">
+      <HomeHeader name={profileName} />
+
+      <div className="rounded-[24px] border border-hairline bg-white/80 p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="label-caps">Today's Checklist</p>
+            <p className="text-[13px] text-ink-secondary mt-1">Urgent tasks that need attention now.</p>
+          </div>
+          <div className="rounded-full bg-sysblue/10 px-3 py-1 text-[12px] font-medium text-sysblue">{overdue.length + dueToday.length} active</div>
+        </div>
+
+        {loading ? (
+          <p className="text-[13px] text-ink-secondary">Loading tasks…</p>
+        ) : urgentEntries.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-hairline px-4 py-8 text-center text-[13px] text-ink-secondary">
+            Nothing urgent today. The runway is clear.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {urgentEntries.map(([brand, items]) => (
+              <div key={brand} className="rounded-2xl border border-hairline bg-canvas/70 p-3">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getBrandColor(brand) }} />
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-ink-secondary">{brand}</p>
+                </div>
+                <div className="space-y-2">
+                  {items.map((task) => {
+                    const isCompleting = completingIds.includes(task.id)
+                    return (
+                      <label key={task.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-white px-3 py-3 transition-all ${isCompleting ? 'opacity-60 line-through' : 'hover:border-sysblue/30'}`}>
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 rounded border-hairline text-sysblue focus:ring-sysblue"
+                          onChange={() => completeTask(task)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[14px] font-medium text-ink-primary">{task.title}</p>
+                          <p className="mt-1 text-[12px] text-ink-secondary">
+                            {task.due_date === todayStr ? 'Due today' : 'Overdue'} · {task.profiles?.full_name || 'Unassigned'}
+                          </p>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-[24px] border border-hairline bg-white/80 p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="label-caps">Upcoming Deadlines</p>
+            <p className="text-[13px] text-ink-secondary mt-1">The next near-future work coming up.</p>
+          </div>
+          <div className="rounded-full bg-amber-100 px-3 py-1 text-[12px] font-medium text-amber-700">{Math.min(upcoming.length, 7)} upcoming</div>
+        </div>
+
+        {upcoming.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-hairline px-4 py-8 text-center text-[13px] text-ink-secondary">
+            No upcoming deadlines in the near future.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {upcoming.slice(0, 7).map((task) => {
+              const days = getDaysRemaining(task.due_date)
+              const isClose = days <= 2
+              return (
+                <div key={task.id} className={`flex items-center justify-between rounded-xl border px-3 py-3 ${isClose ? 'border-amber-300 bg-amber-50/70' : 'border-hairline bg-canvas/60'}`}>
+                  <div>
+                    <p className="text-[14px] font-medium text-ink-primary">{task.title}</p>
+                    <p className="mt-1 text-[12px] text-ink-secondary">{task.clients?.name || 'Unassigned'} · {task.profiles?.full_name || 'Unassigned'}</p>
+                  </div>
+                  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${isClose ? 'border-amber-300 bg-amber-100 text-amber-800' : 'border-hairline bg-white text-ink-secondary'}`}>
+                    {formatDueLabel(task.due_date)}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-[24px] border border-hairline bg-white/80 p-5 shadow-sm">
+        <p className="label-caps mb-3">Agency pulse</p>
+        <p className="text-[14px] text-ink-secondary">
+          {clients.length} brand{clients.length === 1 ? '' : 's'} · {tasks.filter((t) => t.status !== 'done').length} open items · {tasks.filter((t) => t.status === 'done').length} completed
         </p>
       </div>
-
-      {loading ? (
-        <p className="text-ink-secondary text-[13px]">Loading…</p>
-      ) : (
-        <>
-          <TaskGroup title="Overdue" items={overdue} tone="red" />
-          <TaskGroup title="Due today" items={dueToday} tone="yellow" />
-          <TaskGroup title="Upcoming / no date" items={pending} tone="default" />
-          <TaskGroup title="Recently completed" items={doneRecent} tone="green" />
-        </>
-      )}
-    </div>
-  )
-}
-
-function TaskGroup({ title, items, tone }) {
-  const dot = { red: 'bg-traffic-red', yellow: 'bg-traffic-yellow', green: 'bg-traffic-green', default: 'bg-ink-tertiary' }[tone]
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-2 px-1">
-        <span className={`traffic-dot ${dot}`} />
-        <p className="label-caps">{title} ({items.length})</p>
-      </div>
-      {items.length === 0 ? (
-        <p className="text-ink-tertiary text-[13px] px-1">Nothing here.</p>
-      ) : (
-        <div className="mac-window divide-y divide-hairline">
-          {items.map((t) => (
-            <div key={t.id} className="flex items-center justify-between px-5 py-4">
-              <div>
-                <p className="text-ink-primary text-[14px]">{t.title}</p>
-                <p className="text-ink-tertiary text-[12px]">
-                  {t.clients?.name} {t.due_date ? `· due ${t.due_date}` : ''} {t.profiles?.full_name ? `· ${t.profiles.full_name}` : '· unassigned'}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
