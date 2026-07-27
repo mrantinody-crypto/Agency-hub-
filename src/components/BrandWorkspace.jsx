@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { openGooglePicker } from '../lib/googlePicker'
 import StatusDot from './StatusDot'
 
 const TABS = ['Info', 'Calendar', 'Scripts', 'Docs & Sheets', 'Tasks']
@@ -255,6 +256,7 @@ function Resources({ clientId, canEdit }) {
   const [items, setItems] = useState([])
   const [form, setForm] = useState({ label: '', url: '', resource_type: 'google_doc' })
   const [showForm, setShowForm] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
 
   async function load() {
     const { data } = await supabase.from('resources').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
@@ -271,6 +273,24 @@ function Resources({ clientId, canEdit }) {
     load()
   }
 
+  async function handleGooglePick(resource) {
+    await supabase.from('resources').insert({ ...resource, client_id: clientId })
+    setIsConnecting(false)
+    load()
+  }
+
+  async function connectGoogleDrive() {
+    if (!canEdit) return
+    setIsConnecting(true)
+    try {
+      await openGooglePicker(handleGooglePick)
+    } catch (error) {
+      console.warn('Google picker failed.', error)
+    } finally {
+      setIsConnecting(false)
+    }
+  }
+
   const ICON = { google_doc: '📄', google_sheet: '📊', other: '🔗' }
 
   return (
@@ -280,7 +300,19 @@ function Resources({ clientId, canEdit }) {
       </p>
       {canEdit && (
         <div className="mb-4">
-          <AddButton label="+ add link" onClick={() => setShowForm(!showForm)} />
+          <div className="flex flex-wrap gap-2">
+            <AddButton label="+ add link manually" onClick={() => setShowForm(!showForm)} />
+            <button
+              onClick={connectGoogleDrive}
+              className="text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-lg px-3 py-1.5 hover:bg-sysblue/10 transition-colors disabled:opacity-60"
+              disabled={isConnecting}
+            >
+              {isConnecting ? 'Connecting…' : '📎 Connect Google Drive'}
+            </button>
+          </div>
+          <p className="text-[12px] text-ink-tertiary mt-2">
+            First time connecting? Google will ask you to confirm — this is expected since the app is in testing mode. Your account needs to be added as a test user first.
+          </p>
           {showForm && (
             <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
               <Field label="Label" value={form.label} onChange={(v) => setForm({ ...form, label: v })} placeholder="Content calendar sheet" />
