@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import MemberDashboard from './pages/MemberDashboard'
+import Landing from './pages/Landing'
+import HubAdmin from './pages/HubAdmin'
 
 function SplashLoading() {
   return (
@@ -15,7 +17,7 @@ function SplashLoading() {
 function Gate({ children }) {
   const { session, loading } = useAuth()
   if (loading) return <SplashLoading />
-  if (!session) return <Navigate to="/login" replace />
+  if (!session) return <Navigate to="/agency-hub/login" replace />
   return children
 }
 
@@ -26,19 +28,23 @@ function RoleRouter() {
   return <MemberDashboard />
 }
 
+function AgencyHubRoutes() {
+  return (
+    <Routes>
+      <Route path="login" element={<Login />} />
+      <Route index element={<Gate><RoleRouter /></Gate>} />
+      <Route path="*" element={<Gate><RoleRouter /></Gate>} />
+    </Routes>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/*"
-          element={
-            <Gate>
-              <RoleRouter />
-            </Gate>
-          }
-        />
+        <Route path="/" element={<Landing />} />
+        <Route path="/hub-admin" element={<HubAdmin />} />
+        <Route path="/agency-hub/*" element={<AgencyHubRoutes />} />
       </Routes>
     </AuthProvider>
   )

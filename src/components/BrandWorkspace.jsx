@@ -5,29 +5,44 @@ import StatusDot from './StatusDot'
 
 const TABS = ['Info', 'Calendar', 'Scripts', 'Docs & Sheets', 'Tasks']
 
-export default function BrandWorkspace({ client, canEdit }) {
+export default function BrandWorkspace({ client, canEdit, onClientUpdated, onClientDeleted }) {
   const [tab, setTab] = useState('Info')
+
+  async function handleDelete() {
+    if (!canEdit) return
+    const confirmed = window.confirm(`Delete ${client.name}? This will remove the brand and its related data.`)
+    if (!confirmed) return
+    await supabase.from('clients').delete().eq('id', client.id)
+    onClientDeleted?.()
+  }
 
   return (
     <div className="mac-window overflow-hidden">
-      <div className="px-5 py-4 border-b border-hairline flex items-center gap-3 bg-sidebar">
-        <div className="traffic-lights">
-          <span className="traffic-dot bg-traffic-red" />
-          <span className="traffic-dot bg-traffic-yellow" />
-          <span className="traffic-dot bg-traffic-green" />
-        </div>
+      <div className="px-4 py-3 border-b border-hairline flex items-center gap-3 bg-sidebar">
         <span className="font-display text-[20px] text-ink-primary">{client.name}</span>
-        <span className="ml-auto"><StatusDot status={client.status} /></span>
+        <span className="ml-auto flex items-center gap-2">
+          <StatusDot status={client.status} />
+          {canEdit && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="rounded-full border border-hairline bg-white/80 px-2.5 py-1 text-[12px] text-ink-secondary transition-colors hover:border-red-300 hover:text-red-600 dark:bg-[#121212]"
+              aria-label={`Delete ${client.name}`}
+            >
+              🗑
+            </button>
+          )}
+        </span>
       </div>
 
-      <div className="px-5 pt-4">
-        <div className="inline-flex bg-canvas dark:bg-[#232327] border border-hairline rounded-lg p-0.5">
+      <div className="px-4 pt-3">
+        <div className="inline-flex bg-canvas dark:bg-[#121212] border border-hairline rounded-full p-0.5">
           {TABS.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`text-[13px] px-3.5 py-1.5 rounded-md transition-all ${
-                tab === t ? 'bg-white dark:bg-[#232327] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:text-ink-primary'
+              className={`text-[13px] px-3 py-1.5 rounded-full transition-all ${
+                tab === t ? 'bg-white dark:bg-[#121212] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:text-ink-primary'
               }`}
             >
               {t}
@@ -36,8 +51,8 @@ export default function BrandWorkspace({ client, canEdit }) {
         </div>
       </div>
 
-      <div className="p-6">
-        {tab === 'Info' && <Info client={client} canEdit={canEdit} />}
+      <div className="p-4">
+        {tab === 'Info' && <Info client={client} canEdit={canEdit} onClientUpdated={onClientUpdated} />}
         {tab === 'Calendar' && <Calendar clientId={client.id} canEdit={canEdit} />}
         {tab === 'Scripts' && <Scripts clientId={client.id} canEdit={canEdit} />}
         {tab === 'Docs & Sheets' && <Resources clientId={client.id} canEdit={canEdit} />}
@@ -49,8 +64,8 @@ export default function BrandWorkspace({ client, canEdit }) {
 
 function EmptyState({ text }) {
   return (
-    <div className="border border-dashed border-hairline rounded-card py-10 text-center bg-canvas/50">
-      <p className="text-ink-secondary text-[13px]">{text}</p>
+    <div className="rounded-xl border border-dashed border-hairline/90 px-3 py-4 text-center">
+      <p className="text-[13px] text-ink-secondary">{text}</p>
     </div>
   )
 }
@@ -58,14 +73,36 @@ function EmptyState({ text }) {
 function Row({ label, value }) {
   if (!value) return null
   return (
-    <div className="flex px-5 py-4 gap-4">
+    <div className="flex gap-3 px-3 py-2.5">
       <span className="label-caps w-36 shrink-0 pt-0.5">{label}</span>
       <span className="text-ink-primary text-[14px] break-all">{value}</span>
     </div>
   )
 }
 
-function Info({ client }) {
+function SectionHeader({ title, action }) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <p className="label-caps px-1">{title}</p>
+      {action}
+    </div>
+  )
+}
+
+function Info({ client, canEdit, onClientUpdated }) {
+  const [editingSection, setEditingSection] = useState(null)
+  const [form, setForm] = useState({
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    website: '',
+    instagram: '',
+    facebook: '',
+    linkedin: '',
+    other_links: '',
+    login_notes: '',
+  })
+
   const account = [
     ['Website', client.website],
     ['Instagram', client.instagram],
@@ -81,28 +118,121 @@ function Info({ client }) {
   const hasAccount = account.some(([, v]) => v)
   const hasContact = contact.some(([, v]) => v)
 
+  useEffect(() => {
+    setForm({
+      contact_name: client.contact_name || '',
+      contact_email: client.contact_email || '',
+      contact_phone: client.contact_phone || '',
+      website: client.website || '',
+      instagram: client.instagram || '',
+      facebook: client.facebook || '',
+      linkedin: client.linkedin || '',
+      other_links: client.other_links || '',
+      login_notes: client.login_notes || '',
+    })
+    setEditingSection(null)
+  }, [client.id])
+
+  function openEditor(section) {
+    setEditingSection(section)
+  }
+
+  function resetEditor() {
+    setEditingSection(null)
+    setForm({
+      contact_name: client.contact_name || '',
+      contact_email: client.contact_email || '',
+      contact_phone: client.contact_phone || '',
+      website: client.website || '',
+      instagram: client.instagram || '',
+      facebook: client.facebook || '',
+      linkedin: client.linkedin || '',
+      other_links: client.other_links || '',
+      login_notes: client.login_notes || '',
+    })
+  }
+
+  async function handleSave() {
+    const payload = {
+      contact_name: form.contact_name || null,
+      contact_email: form.contact_email || null,
+      contact_phone: form.contact_phone || null,
+      website: form.website || null,
+      instagram: form.instagram || null,
+      facebook: form.facebook || null,
+      linkedin: form.linkedin || null,
+      other_links: form.other_links || null,
+      login_notes: form.login_notes || null,
+    }
+    await supabase.from('clients').update(payload).eq('id', client.id)
+    setEditingSection(null)
+    onClientUpdated?.()
+  }
+
   return (
-    <div className="space-y-5">
-      <div>
-        <p className="label-caps mb-2 px-1">Personal / contact information</p>
-        {hasContact ? (
-          <div className="border border-hairline rounded-card divide-y divide-hairline bg-white">
+    <div className="space-y-3">
+      <div className="rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212]">
+        <SectionHeader
+          title="Personal / contact information"
+          action={canEdit ? <button type="button" onClick={() => openEditor('contact')} className="text-[12px] font-medium text-sysblue">{editingSection === 'contact' ? 'Editing…' : 'Edit'}</button> : null}
+        />
+        {editingSection === 'contact' ? (
+          <div className="space-y-3">
+            <Field label="Contact name" value={form.contact_name} onChange={(v) => setForm((prev) => ({ ...prev, contact_name: v }))} />
+            <Field label="Contact email" value={form.contact_email} onChange={(v) => setForm((prev) => ({ ...prev, contact_email: v }))} />
+            <Field label="Contact phone" value={form.contact_phone} onChange={(v) => setForm((prev) => ({ ...prev, contact_phone: v }))} />
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" onClick={handleSave} className="rounded-full bg-sysblue px-3 py-1.5 text-[13px] font-medium text-white">Save</button>
+              <button type="button" onClick={resetEditor} className="rounded-full border border-hairline px-3 py-1.5 text-[13px] text-ink-secondary">Cancel</button>
+            </div>
+          </div>
+        ) : hasContact ? (
+          <div className="divide-y divide-hairline">
             {contact.map(([l, v]) => <Row key={l} label={l} value={v} />)}
           </div>
-        ) : <EmptyState text="No contact info added yet." />}
+        ) : (
+          <EmptyState text="No contact info added yet." />
+        )}
       </div>
-      <div>
-        <p className="label-caps mb-2 px-1">Account & socials</p>
-        {hasAccount ? (
-          <div className="border border-hairline rounded-card divide-y divide-hairline bg-white">
+
+      <div className="rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212]">
+        <SectionHeader
+          title="Account & socials"
+          action={canEdit ? <button type="button" onClick={() => openEditor('account')} className="text-[12px] font-medium text-sysblue">{editingSection === 'account' ? 'Editing…' : 'Edit'}</button> : null}
+        />
+        {editingSection === 'account' ? (
+          <div className="space-y-3">
+            <Field label="Website" value={form.website} onChange={(v) => setForm((prev) => ({ ...prev, website: v }))} />
+            <Field label="Instagram" value={form.instagram} onChange={(v) => setForm((prev) => ({ ...prev, instagram: v }))} />
+            <Field label="Facebook" value={form.facebook} onChange={(v) => setForm((prev) => ({ ...prev, facebook: v }))} />
+            <Field label="LinkedIn" value={form.linkedin} onChange={(v) => setForm((prev) => ({ ...prev, linkedin: v }))} />
+            <Field label="Other links" value={form.other_links} onChange={(v) => setForm((prev) => ({ ...prev, other_links: v }))} />
+            <div>
+              <label className="label-caps mb-1.5 block">Login notes</label>
+              <textarea
+                value={form.login_notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, login_notes: e.target.value }))}
+                className="min-h-[88px] w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-[14px] text-ink-primary outline-none focus-ring dark:bg-[#121212]"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button type="button" onClick={handleSave} className="rounded-full bg-sysblue px-3 py-1.5 text-[13px] font-medium text-white">Save</button>
+              <button type="button" onClick={resetEditor} className="rounded-full border border-hairline px-3 py-1.5 text-[13px] text-ink-secondary">Cancel</button>
+            </div>
+          </div>
+        ) : hasAccount ? (
+          <div className="divide-y divide-hairline">
             {account.map(([l, v]) => <Row key={l} label={l} value={v} />)}
           </div>
-        ) : <EmptyState text="No account details added yet." />}
+        ) : (
+          <EmptyState text="No account details added yet." />
+        )}
       </div>
-      {client.login_notes && (
-        <div>
+
+      {client.login_notes && !editingSection && (
+        <div className="rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212]">
           <p className="label-caps mb-2 px-1">Notes</p>
-          <div className="border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-5 text-[14px] text-ink-primary whitespace-pre-wrap">
+          <div className="rounded-lg border border-hairline/80 bg-canvas/60 p-3 text-[14px] text-ink-primary whitespace-pre-wrap dark:bg-[#121212]">
             {client.login_notes}
           </div>
         </div>
@@ -120,7 +250,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, full }) {
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-canvas dark:bg-[#232327] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none w-full"
+        className="w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-[14px] text-ink-primary outline-none focus-ring dark:bg-[#121212]"
       />
     </div>
   )
@@ -128,7 +258,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, full }) {
 
 function AddButton({ label, onClick }) {
   return (
-    <button onClick={onClick} className="text-[13px] text-sysblue border border-sysblue/30 bg-sysblue/5 rounded-lg px-3 py-1.5 hover:bg-sysblue/10 transition-colors">
+    <button onClick={onClick} className="rounded-full border border-sysblue/30 bg-sysblue/10 px-3 py-1.5 text-[13px] font-medium text-sysblue transition-colors hover:bg-sysblue/15">
       {label}
     </button>
   )
@@ -164,14 +294,17 @@ function Calendar({ clientId, canEdit }) {
   return (
     <div>
       {canEdit && (
-        <div className="mb-4">
-          <AddButton label="+ add to calendar" onClick={() => setShowForm(!showForm)} />
+        <div className="mb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="label-caps">Calendar</p>
+            <AddButton label="+ add" onClick={() => setShowForm(!showForm)} />
+          </div>
           {showForm && (
-            <form onSubmit={addEvent} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
+            <form onSubmit={addEvent} className="mt-2 rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212] flex flex-wrap gap-3 items-end">
               <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
               <Field label="Platform" value={form.platform} onChange={(v) => setForm({ ...form, platform: v })} placeholder="Instagram" />
               <Field label="Date" type="date" value={form.scheduled_date} onChange={(v) => setForm({ ...form, scheduled_date: v })} />
-              <button className="bg-sysblue text-white text-[13px] font-medium rounded-md px-4 py-2 hover:bg-sysbluedeep">Save</button>
+              <button className="rounded-full bg-sysblue px-3 py-2 text-[13px] font-medium text-white">Save</button>
             </form>
           )}
         </div>
@@ -179,8 +312,8 @@ function Calendar({ clientId, canEdit }) {
       {events.length === 0 ? <EmptyState text="Nothing on the calendar yet." /> : (
         <div className="space-y-2">
           {events.map((ev) => (
-            <div key={ev.id} className="flex items-center justify-between border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
-              <div>
+            <div key={ev.id} className="flex items-center justify-between rounded-full border border-hairline bg-white/80 px-3 py-2.5 transition-colors hover:border-sysblue/30 dark:bg-[#121212]">
+              <div className="min-w-0">
                 <p className="text-ink-primary text-[14px] font-medium">{ev.title}</p>
                 <p className="text-ink-tertiary text-[12px]">{ev.scheduled_date} · {ev.platform || '—'}</p>
               </div>
@@ -216,20 +349,23 @@ function Scripts({ clientId, canEdit }) {
   return (
     <div>
       {canEdit && (
-        <div className="mb-4">
-          <AddButton label="+ add script / copy" onClick={() => setShowForm(!showForm)} />
+        <div className="mb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="label-caps">Scripts</p>
+            <AddButton label="+ add" onClick={() => setShowForm(!showForm)} />
+          </div>
           {showForm && (
-            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 space-y-3">
+            <form onSubmit={addItem} className="mt-2 rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212] space-y-3">
               <Field label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} full />
               <div>
                 <label className="label-caps block mb-1.5">Content</label>
                 <textarea
-                  className="w-full bg-canvas border border-hairline rounded-md px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none min-h-[100px]"
+                  className="min-h-[96px] w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-[14px] text-ink-primary outline-none focus-ring dark:bg-[#121212]"
                   value={form.body}
                   onChange={(e) => setForm({ ...form, body: e.target.value })}
                 />
               </div>
-              <button className="bg-sysblue text-white text-[13px] font-medium rounded-md px-4 py-2 hover:bg-sysbluedeep">Save</button>
+              <button className="rounded-full bg-sysblue px-3 py-2 text-[13px] font-medium text-white">Save</button>
             </form>
           )}
         </div>
@@ -237,12 +373,12 @@ function Scripts({ clientId, canEdit }) {
       {items.length === 0 ? <EmptyState text="No scripts or copy saved yet." /> : (
         <div className="space-y-2">
           {items.map((it) => (
-            <details key={it.id} className="border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
-              <summary className="cursor-pointer flex items-center justify-between list-none">
+            <details key={it.id} className="rounded-2xl border border-hairline bg-white/80 px-3 py-2.5 transition-colors hover:border-sysblue/30 dark:bg-[#121212]">
+              <summary className="flex cursor-pointer items-center justify-between list-none">
                 <span className="text-ink-primary text-[14px] font-medium">{it.title}</span>
                 <span className="label-caps">{it.content_type}</span>
               </summary>
-              <p className="text-ink-secondary text-[13px] mt-3 whitespace-pre-wrap">{it.body}</p>
+              <p className="mt-2 text-ink-secondary text-[13px] whitespace-pre-wrap">{it.body}</p>
             </details>
           ))}
         </div>
@@ -275,14 +411,17 @@ function Resources({ clientId, canEdit }) {
 
   return (
     <div>
-      <p className="text-ink-tertiary text-[12px] mb-3">
+      <p className="mb-2 text-ink-tertiary text-[12px]">
         Paste links to Google Docs, Sheets, or anything else you want on hand for this brand.
       </p>
       {canEdit && (
-        <div className="mb-4">
-          <AddButton label="+ add link manually" onClick={() => setShowForm(!showForm)} />
+        <div className="mb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="label-caps">Resources</p>
+            <AddButton label="+ add" onClick={() => setShowForm(!showForm)} />
+          </div>
           {showForm && (
-            <form onSubmit={addItem} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
+            <form onSubmit={addItem} className="mt-2 rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212] flex flex-wrap gap-3 items-end">
               <Field label="Label" value={form.label} onChange={(v) => setForm({ ...form, label: v })} placeholder="Content calendar sheet" />
               <Field label="URL" value={form.url} onChange={(v) => setForm({ ...form, url: v })} placeholder="https://docs.google.com/…" />
               <div>
@@ -290,14 +429,14 @@ function Resources({ clientId, canEdit }) {
                 <select
                   value={form.resource_type}
                   onChange={(e) => setForm({ ...form, resource_type: e.target.value })}
-                  className="bg-canvas border border-hairline rounded-md px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
+                  className="rounded-lg border border-hairline bg-canvas px-3 py-2 text-[14px] text-ink-primary outline-none focus-ring dark:bg-[#121212]"
                 >
                   <option value="google_doc">Google Doc</option>
                   <option value="google_sheet">Google Sheet</option>
                   <option value="other">Other</option>
                 </select>
               </div>
-              <button className="bg-sysblue text-white text-[13px] font-medium rounded-md px-4 py-2 hover:bg-sysbluedeep">Save</button>
+              <button className="rounded-full bg-sysblue px-3 py-2 text-[13px] font-medium text-white">Save</button>
             </form>
           )}
         </div>
@@ -306,7 +445,7 @@ function Resources({ clientId, canEdit }) {
         <div className="space-y-2">
           {items.map((r) => (
             <a key={r.id} href={r.url} target="_blank" rel="noreferrer"
-              className="flex items-center gap-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 hover:border-sysblue/40 hover:shadow-md transition-all">
+              className="flex items-center gap-3 rounded-full border border-hairline bg-white/80 px-3 py-2.5 transition-colors hover:border-sysblue/30 hover:shadow-sm dark:bg-[#121212]">
               <span className="text-lg">{ICON[r.resource_type]}</span>
               <span className="text-ink-primary text-[14px] font-medium">{r.label}</span>
               <span className="ml-auto text-ink-tertiary text-[12px] truncate max-w-[220px]">{r.url}</span>
@@ -361,10 +500,13 @@ function Tasks({ clientId, canEdit }) {
 
   return (
     <div>
-      <div className="mb-4">
-        <AddButton label="+ add task" onClick={() => setShowForm(!showForm)} />
+      <div className="mb-3">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="label-caps">Tasks</p>
+          <AddButton label="+ add" onClick={() => setShowForm(!showForm)} />
+        </div>
         {showForm && (
-          <form onSubmit={addTask} className="mt-3 border border-hairline rounded-card bg-white/80 dark:bg-[#232327] p-4 flex flex-wrap gap-3 items-end">
+          <form onSubmit={addTask} className="mt-2 rounded-2xl border border-hairline bg-white/80 p-3 dark:bg-[#121212] flex flex-wrap gap-3 items-end">
             <Field label="Task" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
             <Field label="Due" type="date" value={form.due_date} onChange={(v) => setForm({ ...form, due_date: v })} />
             <div>
@@ -372,21 +514,21 @@ function Tasks({ clientId, canEdit }) {
               <select
                 value={form.assigned_to}
                 onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}
-                className="bg-canvas border border-hairline rounded-md px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
+                className="rounded-lg border border-hairline bg-canvas px-3 py-2 text-[14px] text-ink-primary outline-none focus-ring dark:bg-[#121212]"
               >
                 <option value="">Unassigned</option>
                 {team.map((p) => <option key={p.id} value={p.id}>{p.full_name || 'Unnamed'}</option>)}
               </select>
             </div>
-            <button className="bg-sysblue text-white text-[13px] font-medium rounded-md px-4 py-2 hover:bg-sysbluedeep">Save</button>
+            <button className="rounded-full bg-sysblue px-3 py-2 text-[13px] font-medium text-white">Save</button>
           </form>
         )}
       </div>
       {tasks.length === 0 ? <EmptyState text="No tasks yet — add the first one." /> : (
         <div className="space-y-2">
           {tasks.map((t) => (
-            <div key={t.id} className="flex items-center justify-between border border-hairline rounded-card bg-white/80 dark:bg-[#232327] px-4 py-3 transition-shadow hover:shadow-md">
-              <div>
+            <div key={t.id} className="flex items-center justify-between rounded-full border border-hairline bg-white/80 px-3 py-2.5 transition-colors hover:border-sysblue/30 dark:bg-[#121212]">
+              <div className="min-w-0">
                 <p className="text-ink-primary text-[14px] font-medium">{t.title}</p>
                 <p className="text-ink-tertiary text-[12px]">
                   {t.due_date ? `due ${t.due_date}` : 'no due date'}

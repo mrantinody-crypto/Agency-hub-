@@ -14,8 +14,8 @@ body {
 }
 
 .dark body {
-  background: #17171A;
-  color: #F5F5F0;
+  background: #000000;
+  color: #F5F5F5;
 }
 
 ::selection { background: #0A84FF; color: #fff; }
@@ -29,25 +29,25 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover { background: #3B3B42; }
 
 .bg-canvas { background-color: #FAFAF8; }
-.dark .bg-canvas { background-color: #17171A; }
+.dark .bg-canvas { background-color: #000000; }
 
 .bg-sidebar { background-color: #F4F3EF; }
-.dark .bg-sidebar { background-color: #1F1F23; }
+.dark .bg-sidebar { background-color: #0A0A0A; }
 
 .bg-card, .bg-white { background-color: #FFFFFF; }
-.dark .bg-card, .dark .bg-white { background-color: #232327; }
+.dark .bg-card, .dark .bg-white { background-color: #121212; }
 
 .text-ink-primary { color: #18181B; }
-.dark .text-ink-primary { color: #F5F5F0; }
+.dark .text-ink-primary { color: #F5F5F5; }
 
 .text-ink-secondary { color: #5E5E66; }
-.dark .text-ink-secondary { color: #9B9BA3; }
+.dark .text-ink-secondary { color: #A3A3A3; }
 
 .text-ink-tertiary { color: #8E8E96; }
 .dark .text-ink-tertiary { color: #7C7C87; }
 
 .border-hairline { border-color: #D9D9DE; }
-.dark .border-hairline, .dark .divide-hairline > :not([hidden]) ~ :not([hidden]) { border-color: #303035; }
+.dark .border-hairline, .dark .divide-hairline > :not([hidden]) ~ :not([hidden]) { border-color: #262626; }
 
 .label-caps {
   font-size: 11px;
@@ -67,8 +67,8 @@ body {
 }
 
 .dark .mac-window {
-  background: #232327;
-  border-color: #303035;
+  background: #121212;
+  border-color: #262626;
   box-shadow: 0 1px 3px rgba(0,0,0,0.24), 0 10px 30px rgba(0,0,0,0.28);
 }
 

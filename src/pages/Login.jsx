@@ -29,7 +29,7 @@ export default function Login() {
         })
         if (error) throw error
       }
-      navigate('/')
+      navigate('/agency-hub')
     } catch (err) {
       setError(err.message)
     } finally {

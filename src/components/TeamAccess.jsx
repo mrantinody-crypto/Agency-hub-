@@ -74,7 +74,7 @@ export default function TeamAccess({ clients }) {
                     <select
                       value={p.role}
                       onChange={(e) => setRole(p.id, e.target.value)}
-                      className="bg-canvas dark:bg-[#232327] border border-hairline rounded-md px-2 py-1 text-[13px] focus-ring outline-none"
+                      className="bg-canvas dark:bg-[#121212] border border-hairline rounded-md px-2 py-1 text-[13px] focus-ring outline-none"
                     >
                       <option value="client">Client</option>
                       <option value="team">Designer</option>

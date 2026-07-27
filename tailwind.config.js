@@ -22,6 +22,10 @@ export default {
           green: '#28C840',
         },
       },
+      boxShadow: {
+        panel: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)',
+        pop: '0 12px 32px rgba(0,0,0,0.14)',
+      },
       fontFamily: {
         display: ['Fraunces', 'Georgia', 'serif'],
         body: ['Inter', 'system-ui', 'sans-serif'],
@@ -30,10 +34,6 @@ export default {
       borderRadius: {
         window: '16px',
         card: '12px',
-      },
-      boxShadow: {
-        panel: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)',
-        pop: '0 12px 32px rgba(0,0,0,0.14)',
       },
     },
   },

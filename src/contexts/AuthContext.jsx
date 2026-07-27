@@ -46,7 +46,9 @@ export function AuthProvider({ children }) {
     isAdmin: profile?.role === 'admin',
     isTeam: profile?.role === 'team',
     isClient: profile?.role === 'client',
-    signOut: () => supabase.auth.signOut(),
+    signOut: () => supabase.auth.signOut().then(() => {
+      window.location.assign('/agency-hub/login')
+    }),
     refreshProfile,
   }
 

@@ -92,7 +92,7 @@ export default function AccountPanel() {
               <input
                 type="password"
                 placeholder="New password"
-                className="w-full bg-white dark:bg-[#232327] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
+                className="w-full bg-white dark:bg-[#121212] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
                 value={passwords.next}
                 onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
                 required
@@ -100,7 +100,7 @@ export default function AccountPanel() {
               <input
                 type="password"
                 placeholder="Confirm password"
-                className="w-full bg-white dark:bg-[#232327] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
+                className="w-full bg-white dark:bg-[#121212] border border-hairline rounded-lg px-3 py-2 text-[14px] text-ink-primary focus-ring outline-none"
                 value={passwords.confirm}
                 onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                 required

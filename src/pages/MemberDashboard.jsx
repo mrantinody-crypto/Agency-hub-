@@ -68,15 +68,29 @@ export default function MemberDashboard() {
 
   const selected = clients.find((c) => c.id === view)
 
+  function handleClientUpdated() {
+    const load = async () => {
+      const { data } = await supabase.from('client_members').select('clients(*)').eq('user_id', user.id)
+      const list = (data || []).map((r) => r.clients).filter(Boolean)
+      setClients(list)
+    }
+    if (user) load()
+  }
+
+  function handleClientDeleted() {
+    setView('today')
+    if (user) {
+      supabase.from('client_members').select('clients(*)').eq('user_id', user.id).then(({ data }) => {
+        const list = (data || []).map((r) => r.clients).filter(Boolean)
+        setClients(list)
+      })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-canvas flex">
       <aside className="w-72 bg-sidebar border-r border-hairline flex flex-col shrink-0">
         <div className="px-5 py-4 border-b border-hairline">
-          <div className="traffic-lights mb-3">
-            <span className="traffic-dot bg-traffic-red" />
-            <span className="traffic-dot bg-traffic-yellow" />
-            <span className="traffic-dot bg-traffic-green" />
-          </div>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
@@ -121,7 +135,7 @@ export default function MemberDashboard() {
           <button
             type="button"
             onClick={toggleTheme}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-hairline bg-white/80 dark:bg-[#232327] px-3 py-2 text-[13px] text-ink-secondary transition-shadow hover:shadow-md"
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-hairline bg-white/80 dark:bg-[#121212] px-3 py-2 text-[13px] text-ink-secondary transition-shadow hover:shadow-md"
           >
             <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
             {theme === 'dark' ? 'Light mode' : 'Dark mode'}
@@ -145,7 +159,7 @@ export default function MemberDashboard() {
         ) : view === 'account' ? (
           <AccountPanel />
         ) : selected ? (
-          <BrandWorkspace client={selected} canEdit={isTeam} />
+          <BrandWorkspace client={selected} canEdit={isTeam} onClientUpdated={handleClientUpdated} onClientDeleted={handleClientDeleted} />
         ) : null}
       </main>
     </div>
@@ -157,7 +171,7 @@ function SidebarItem({ active, onClick, label, icon }) {
     <button
       onClick={onClick}
       className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 text-[13px] transition-all ${
-        active ? 'bg-white dark:bg-[#232327] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/70 dark:hover:bg-[#232327] hover:shadow-sm'
+        active ? 'bg-white dark:bg-[#121212] shadow-sm text-ink-primary font-medium' : 'text-ink-secondary hover:bg-white/70 dark:hover:bg-[#121212] hover:shadow-sm'
       }`}
     >
       <span>{icon}</span>{label}
@@ -193,27 +207,27 @@ function MyToday({ clients, userId, tasks, profileName }) {
   const urgentEntries = Object.entries(urgentGroups).sort((a, b) => a[0].localeCompare(b[0]))
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="max-w-5xl space-y-4">
       <HomeHeader name={profileName} />
 
-      <div className="rounded-[24px] border border-hairline bg-white/80 p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="rounded-[20px] border border-hairline bg-white/80 p-3.5 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="label-caps">Today's Checklist</p>
             <p className="text-[13px] text-ink-secondary mt-1">Your priorities for the day.</p>
           </div>
-          <div className="rounded-full bg-sysblue/10 px-3 py-1 text-[12px] font-medium text-sysblue">{overdue.length + dueToday.length} active</div>
+          <div className="rounded-full bg-sysblue/10 px-2.5 py-1 text-[12px] font-medium text-sysblue">{overdue.length + dueToday.length} active</div>
         </div>
 
         {urgentEntries.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-hairline px-4 py-8 text-center text-[13px] text-ink-secondary">
+          <div className="rounded-xl border border-dashed border-hairline px-3 py-4 text-center text-[13px] text-ink-secondary">
             Nothing urgent today — your queue looks clear.
           </div>
         ) : (
           <div className="space-y-4">
             {urgentEntries.map(([brand, items]) => (
-              <div key={brand} className="rounded-2xl border border-hairline bg-canvas/70 p-3">
-                <div className="mb-3 flex items-center gap-2">
+              <div key={brand} className="rounded-2xl border border-hairline bg-canvas/70 p-2.5">
+                <div className="mb-2 flex items-center gap-2">
                   <span className="inline-flex h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getBrandColor(brand) }} />
                   <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-ink-secondary">{brand}</p>
                 </div>
@@ -221,7 +235,7 @@ function MyToday({ clients, userId, tasks, profileName }) {
                   {items.map((task) => {
                     const isCompleting = completingIds.includes(task.id)
                     return (
-                      <label key={task.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-white px-3 py-3 transition-all ${isCompleting ? 'opacity-60 line-through' : 'hover:border-sysblue/30'}`}>
+                      <label key={task.id} className={`flex cursor-pointer items-start gap-2.5 rounded-full border border-hairline bg-white px-2.5 py-2 transition-all ${isCompleting ? 'opacity-60 line-through' : 'hover:border-sysblue/30'}`}>
                         <input
                           type="checkbox"
                           className="mt-1 h-4 w-4 rounded border-hairline text-sysblue focus:ring-sysblue"
@@ -243,17 +257,17 @@ function MyToday({ clients, userId, tasks, profileName }) {
         )}
       </div>
 
-      <div className="rounded-[24px] border border-hairline bg-white/80 p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="rounded-[20px] border border-hairline bg-white/80 p-3.5 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="label-caps">Upcoming Deadlines</p>
             <p className="text-[13px] text-ink-secondary mt-1">Things coming up next.</p>
           </div>
-          <div className="rounded-full bg-amber-100 px-3 py-1 text-[12px] font-medium text-amber-700">{Math.min(upcoming.length, 7)} upcoming</div>
+          <div className="rounded-full bg-amber-100 px-2.5 py-1 text-[12px] font-medium text-amber-700">{Math.min(upcoming.length, 7)} upcoming</div>
         </div>
 
         {upcoming.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-hairline px-4 py-8 text-center text-[13px] text-ink-secondary">
+          <div className="rounded-xl border border-dashed border-hairline px-3 py-4 text-center text-[13px] text-ink-secondary">
             No nearby deadlines from your assignments.
           </div>
         ) : (
@@ -262,7 +276,7 @@ function MyToday({ clients, userId, tasks, profileName }) {
               const days = getDaysRemaining(task.due_date)
               const isClose = days <= 2
               return (
-                <div key={task.id} className={`flex items-center justify-between rounded-xl border px-3 py-3 ${isClose ? 'border-amber-300 bg-amber-50/70' : 'border-hairline bg-canvas/60'}`}>
+                <div key={task.id} className={`flex items-center justify-between rounded-full border px-2.5 py-2 ${isClose ? 'border-amber-300 bg-amber-50/70' : 'border-hairline bg-canvas/60'}`}>
                   <div>
                     <p className="text-[14px] font-medium text-ink-primary">{task.title}</p>
                     <p className="mt-1 text-[12px] text-ink-secondary">{task.clients?.name || 'Unassigned'}</p>
