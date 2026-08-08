@@ -13,6 +13,9 @@ console.log('Supabase client init:', {
   maskedAnonKey: maskedKey,
   supabaseAvailable,
 })
+console.log('SUPABASE URL:', import.meta.env.VITE_SUPABASE_URL)
+console.log('SUPABASE KEY (last 12 chars):', import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(-12))
+console.log('SUPABASE KEY LENGTH:', import.meta.env.VITE_SUPABASE_ANON_KEY?.length)
 
 if (!supabaseAvailable) {
   console.warn(
