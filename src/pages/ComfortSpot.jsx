@@ -9,11 +9,11 @@ const heroPhoto = '/images/his-photo.webp'
 const unlockCredentials = { id: 'abhinavchauhan26@gmail.com', pass: 'ABHI1234' }
 
 const tracks = [
-  { id: 1, title: 'Raabta', src: '/audio/raabta.mp3', art: '/images/art-1.webp' },
-  { id: 2, title: 'Arz Kiya Hai', src: '/audio/arz-kiya-hai.mp3', art: '/images/art-2.webp' },
-  { id: 3, title: 'Mere Nishaan', src: '/audio/mere-nishaan.mp3', art: '/images/art-3.webp' },
-  { id: 4, title: 'Zaalima', src: '/audio/zaalima.mp3', art: '/images/art-4.webp' },
-  { id: 5, title: 'Darkhaast', src: '/audio/darkhaast.mp3', art: '/images/art-5.webp' },
+  { id: 1, title: 'Raabta', src: '/audio/raabata.mp3', art: '/images/art1.webp' },
+  { id: 2, title: 'Arz Kiya Hai', src: '/audio/arz kiya hai.mp3', art: '/images/art2.webp' },
+  { id: 3, title: 'Mere Nishaan', src: '/audio/mere nishaan .mp3', art: '/images/art3.webp' },
+  { id: 4, title: 'Zaalima', src: '/audio/zaalima.mp3', art: '/images/art4.webp' },
+  { id: 5, title: 'Darkhaast', src: '/audio/darkhaast.mp3', art: '/images/art5.webp' },
 ]
 
 export default function ComfortSpot() {
