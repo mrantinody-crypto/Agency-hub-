@@ -19,26 +19,18 @@ export default function Landing() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase.from('projects_public').select('*').order('created_at', { ascending: false })
-      let list = data || []
-      // Ensure the local "My Comfort Spot" project is present for the landing page
-      const comfortSlug = 'comfort-spot'
-      const hasComfort = list.find((p) => p.slug === comfortSlug)
-      if (!hasComfort) {
-        list = [
-          ...list,
-          {
-            id: comfortSlug,
-            slug: comfortSlug,
-            title: "My Comfort Spot",
-            tagline: 'A little corner just for him',
-            route: '/comfort-spot',
-            status: 'live',
-            cover_color: '#7C3AED',
-          },
-        ]
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id,slug,title,tagline,route,status,cover_color')
+        .eq('status', 'live')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Failed to load public projects:', error)
+        setProjects([])
+      } else {
+        setProjects(data || [])
       }
-      setProjects(list)
       setLoading(false)
     }
     load()
@@ -50,22 +42,22 @@ export default function Landing() {
     setBusy(true)
     setError('')
 
-    const { data, error: rpcError } = await supabase.rpc('check_project_code', {
-      p_slug: selectedProject.slug,
-      p_code: code,
-    })
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id,slug,route')
+      .eq('slug', selectedProject.slug)
+      .eq('access_code', code)
+      .single()
 
-    const validFallback = selectedProject.slug === 'comfort-spot' && String(code || '').trim().toUpperCase() === 'NOOR678'
-    const unlocked = Boolean(data) || validFallback
-
-    if (rpcError) {
+    if (error) {
+      console.error('Project unlock error:', error)
       setError('Unable to verify access code right now.')
       setBusy(false)
       return
     }
 
-    if (unlocked) {
-      if (selectedProject.route.startsWith('http')) {
+    if (data) {
+      if (selectedProject.route?.startsWith('http')) {
         window.location.assign(selectedProject.route)
       } else {
         navigate(selectedProject.route)

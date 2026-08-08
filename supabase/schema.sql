@@ -7,7 +7,7 @@
 create table profiles (
   id uuid references auth.users on delete cascade primary key,
   full_name text,
-  role text not null default 'client' check (role in ('admin', 'team', 'client')),
+  role text not null default 'client' check (role in ('admin', 'team', 'client', 'owner')),
   email text,
   created_at timestamptz default now()
 );
@@ -81,6 +81,19 @@ create table tasks (
   created_at timestamptz default now()
 );
 
+create table projects (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  tagline text,
+  description text,
+  route text,
+  access_code text,
+  cover_color text,
+  status text default 'draft' check (status in ('draft', 'live')),
+  created_at timestamptz default now()
+);
+
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -91,9 +104,10 @@ alter table calendar_events enable row level security;
 alter table content_items enable row level security;
 alter table resources enable row level security;
 alter table tasks enable row level security;
+alter table projects enable row level security;
 
 create or replace function is_admin() returns boolean as $$
-  select exists (select 1 from profiles where id = auth.uid() and role = 'admin');
+  select exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'owner'));
 $$ language sql security definer;
 
 create or replace function is_client_member(cid uuid) returns boolean as $$
@@ -128,6 +142,9 @@ create policy "tasks_admin_all" on tasks for all using (is_admin()) with check (
 create policy "tasks_member_select" on tasks for select using (is_client_member(client_id));
 create policy "tasks_member_write" on tasks for insert with check (is_client_member(client_id));
 create policy "tasks_member_update" on tasks for update using (is_client_member(client_id));
+
+create policy "projects_select_public" on projects for select using (status = 'live');
+create policy "projects_admin_all" on projects for all using (is_admin()) with check (is_admin());
 
 -- Auto-create a profile row on signup
 create or replace function handle_new_user() returns trigger as $$
