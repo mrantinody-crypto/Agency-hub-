@@ -9,11 +9,11 @@ const heroPhoto = '/images/his-photo.webp'
 const unlockCredentials = { id: 'abhinavchauhan26@gmail.com', pass: 'ABHI1234' }
 
 const tracks = [
-  { id: 1, title: 'Track Name 1', duration: '3:20', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', art: '/images/art1.svg' },
-  { id: 2, title: 'Track Name 2', duration: '2:58', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', art: '/images/art2.svg' },
-  { id: 3, title: 'Track Name 3', duration: '3:05', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', art: '/images/art3.svg' },
-  { id: 4, title: 'Track Name 4', duration: '4:10', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', art: '/images/art1.svg' },
-  { id: 5, title: 'Track Name 5', duration: '3:44', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', art: '/images/art2.svg' },
+  { id: 1, title: 'Track Name 1', duration: '3:20', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', art: '/images/art1.webp' },
+  { id: 2, title: 'Track Name 2', duration: '2:58', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', art: '/images/art2.webp' },
+  { id: 3, title: 'Track Name 3', duration: '3:05', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', art: '/images/art3.webp' },
+  { id: 4, title: 'Track Name 4', duration: '4:10', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', art: '/images/art4.webp' },
+  { id: 5, title: 'Track Name 5', duration: '3:44', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', art: '/images/art5.webp' },
 ]
 
 export default function ComfortSpot() {
