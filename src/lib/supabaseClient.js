@@ -2,6 +2,15 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const maskedKey = supabaseAnonKey ? `${supabaseAnonKey.slice(0, 8)}...${supabaseAnonKey.slice(-8)}` : 'MISSING'
+
+console.log('Supabase client init:', {
+  env: {
+    VITE_SUPABASE_URL: supabaseUrl ? 'SET' : 'MISSING',
+    VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'SET' : 'MISSING',
+  },
+  maskedAnonKey: maskedKey,
+})
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
@@ -48,9 +57,13 @@ if (supabaseUrl && supabaseAnonKey) {
   const auth = {
     ...originalAuth,
     getSession: async () => {
-      if (fallbackSession) return { data: { session: fallbackSession } }
+      if (fallbackSession) {
+        console.debug('Supabase getSession: using fallback session')
+        return { data: { session: fallbackSession } }
+      }
       try {
         const result = await originalGetSession()
+        console.debug('Supabase getSession result:', result)
         return { data: { session: result?.data?.session || null } }
       } catch (error) {
         console.warn('Supabase getSession fallback active:', error)

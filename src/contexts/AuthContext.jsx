@@ -21,10 +21,23 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true
+    let settled = false
 
     async function initSession() {
+      console.debug('AuthContext: starting session initialization')
+      const timeout = window.setTimeout(() => {
+        if (!settled && mounted) {
+          settled = true
+          console.warn('Auth session check timed out after 5 seconds; falling back to unauthenticated state.')
+          setSession(null)
+          setProfile(null)
+          setLoading(false)
+        }
+      }, 5000)
+
       try {
         const result = await supabase.auth.getSession()
+        console.debug('AuthContext getSession result:', result)
         const session = result?.data?.session || null
         if (!mounted) return
         setSession(session)
@@ -35,13 +48,18 @@ export function AuthProvider({ children }) {
         setSession(null)
         setProfile(null)
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted && !settled) {
+          settled = true
+          window.clearTimeout(timeout)
+          setLoading(false)
+        }
       }
     }
 
     initSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.debug('Auth state changed:', _event, session)
       setSession(session)
       if (session?.user) {
         loadProfile(session.user.id)
