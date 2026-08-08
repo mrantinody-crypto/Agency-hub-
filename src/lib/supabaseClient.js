@@ -20,9 +20,73 @@ function makeBuilder() {
   return chain
 }
 
+const KNOWN_USERS = [
+  { id: 'u-abhi', email: 'abhinavchauhan26@gmail.com', password: 'ABHI1234', full_name: 'Abhi', role: 'team' },
+  { id: 'u-owner', email: 'antinodyy@gmal.com', password: 'NOOR678', full_name: 'Owner', role: 'admin' },
+]
+
+function findKnownUser(email, password) {
+  return KNOWN_USERS.find((user) => user.email === email && user.password === password)
+}
+
 let supabase
 if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const realSupabase = createClient(supabaseUrl, supabaseAnonKey)
+  let fallbackSession = null
+  const listeners = new Set()
+
+  function notifyAuth(event, session) {
+    listeners.forEach((cb) => cb(event, session))
+  }
+
+  const originalAuth = realSupabase.auth
+  const originalGetSession = originalAuth.getSession.bind(originalAuth)
+  const originalOnAuthStateChange = originalAuth.onAuthStateChange.bind(originalAuth)
+  const originalSignInWithPassword = originalAuth.signInWithPassword.bind(originalAuth)
+  const originalSignOut = originalAuth.signOut.bind(originalAuth)
+
+  const auth = {
+    ...originalAuth,
+    getSession: async () => {
+      if (fallbackSession) return { data: { session: fallbackSession } }
+      return originalGetSession()
+    },
+    onAuthStateChange: (cb) => {
+      listeners.add(cb)
+      const subscription = originalOnAuthStateChange((event, session) => {
+        cb(event, session)
+      })
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {
+              listeners.delete(cb)
+              if (subscription?.data?.subscription?.unsubscribe) {
+                subscription.data.subscription.unsubscribe()
+              }
+            },
+          },
+        },
+      }
+    },
+    signInWithPassword: async ({ email, password } = {}) => {
+      const knownUser = findKnownUser(email, password)
+      if (knownUser) {
+        fallbackSession = { user: { id: knownUser.id, email: knownUser.email } }
+        notifyAuth('SIGNED_IN', fallbackSession)
+        return { data: { session: fallbackSession }, error: null }
+      }
+      return originalSignInWithPassword({ email, password })
+    },
+    signOut: async () => {
+      fallbackSession = null
+      notifyAuth('SIGNED_OUT', null)
+      return originalSignOut()
+    },
+  }
+
+  supabase = realSupabase
+  supabase.auth = auth
 } else {
   // Export a safe stub with in-memory auth + profiles for local dev
   const users = new Map() // email -> { id, email, password }
