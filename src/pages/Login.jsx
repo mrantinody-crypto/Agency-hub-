@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { supabase, supabaseAvailable } from '../lib/supabaseClient'
 import { useTheme } from '../contexts/ThemeContext'
 
 export default function Login() {
@@ -40,6 +40,12 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-canvas flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
+        { !supabaseAvailable && (
+          <div className="mb-4 rounded-3xl border border-red-300 bg-red-50 p-4 text-sm text-red-900">
+            <p className="font-semibold">Connection issue</p>
+            <p className="mt-1">Supabase is not configured in the deployed app. Please check Vercel environment variables and redeploy.</p>
+          </div>
+        ) }
         <div className="mb-4 flex justify-end">
           <button type="button" onClick={toggleTheme} className="rounded-full border border-hairline bg-white/80 px-3 py-1.5 text-[12px] text-ink-secondary shadow-sm">
             {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}

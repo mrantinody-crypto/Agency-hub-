@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseAvailable = Boolean(supabaseUrl && supabaseAnonKey)
 const maskedKey = supabaseAnonKey ? `${supabaseAnonKey.slice(0, 8)}...${supabaseAnonKey.slice(-8)}` : 'MISSING'
 
 console.log('Supabase client init:', {
@@ -10,9 +11,10 @@ console.log('Supabase client init:', {
     VITE_SUPABASE_ANON_KEY: supabaseAnonKey ? 'SET' : 'MISSING',
   },
   maskedAnonKey: maskedKey,
+  supabaseAvailable,
 })
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseAvailable) {
   console.warn(
     'Missing Supabase env vars. Copy .env.example to .env and fill in your project URL + anon key.'
   )
@@ -54,8 +56,8 @@ if (supabaseUrl && supabaseAnonKey) {
   const originalSignInWithPassword = originalAuth.signInWithPassword.bind(originalAuth)
   const originalSignOut = originalAuth.signOut.bind(originalAuth)
 
-  const auth = {
-    ...originalAuth,
+  const auth = Object.create(originalAuth)
+  Object.assign(auth, {
     getSession: async () => {
       if (fallbackSession) {
         console.debug('Supabase getSession: using fallback session')
@@ -102,7 +104,7 @@ if (supabaseUrl && supabaseAnonKey) {
       notifyAuth('SIGNED_OUT', null)
       return originalSignOut()
     },
-  }
+  })
 
   supabase = realSupabase
   supabase.auth = auth
@@ -307,4 +309,4 @@ if (supabaseUrl && supabaseAnonKey) {
   seedUser({ id: 'u-owner', email: 'antinodyy@gmal.com', password: 'NOOR678', full_name: 'Owner', role: 'admin' })
 }
 
-export { supabase }
+export { supabase, supabaseAvailable }
