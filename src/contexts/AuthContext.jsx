@@ -20,11 +20,26 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session?.user) loadProfile(session.user.id)
-      setLoading(false)
-    })
+    let mounted = true
+
+    async function initSession() {
+      try {
+        const result = await supabase.auth.getSession()
+        const session = result?.data?.session || null
+        if (!mounted) return
+        setSession(session)
+        if (session?.user) await loadProfile(session.user.id)
+      } catch (error) {
+        console.warn('Failed to load auth session:', error)
+        if (!mounted) return
+        setSession(null)
+        setProfile(null)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    initSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
@@ -35,7 +50,10 @@ export function AuthProvider({ children }) {
       }
     })
 
-    return () => listener.subscription.unsubscribe()
+    return () => {
+      mounted = false
+      listener?.subscription?.unsubscribe?.()
+    }
   }, [])
 
   const value = {

@@ -49,7 +49,13 @@ if (supabaseUrl && supabaseAnonKey) {
     ...originalAuth,
     getSession: async () => {
       if (fallbackSession) return { data: { session: fallbackSession } }
-      return originalGetSession()
+      try {
+        const result = await originalGetSession()
+        return { data: { session: result?.data?.session || null } }
+      } catch (error) {
+        console.warn('Supabase getSession fallback active:', error)
+        return { data: { session: null } }
+      }
     },
     onAuthStateChange: (cb) => {
       listeners.add(cb)
