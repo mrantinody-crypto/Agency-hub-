@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import './ComfortSpot.css'
 
 // Replace these with real files in `public/images` and `public/audio` later
 const heroPhoto = '/images/his-photo.webp'
@@ -16,10 +17,21 @@ const tracks = [
   { id: 5, title: 'Darkhaast', src: '/audio/darkhaast.mp3', art: '/images/art5.webp' },
 ]
 
+const bubbleTexts = ['I love you Abhi', 'my baby boy', 'forever yours']
+
+const bubbleConfigs = [
+  { left: '8%', size: 96, delay: 0, duration: 22, color: 'rgba(255, 118, 189, 0.22)', text: '' },
+  { left: '24%', size: 64, delay: 3, duration: 18, color: 'rgba(132, 119, 255, 0.18)', text: 'I love you Abhi' },
+  { left: '45%', size: 72, delay: 5, duration: 24, color: 'rgba(96, 255, 226, 0.18)', text: '' },
+  { left: '62%', size: 52, delay: 8, duration: 20, color: 'rgba(255, 191, 105, 0.18)', text: 'my baby boy' },
+  { left: '78%', size: 84, delay: 2, duration: 26, color: 'rgba(246, 120, 255, 0.16)', text: 'forever yours' },
+]
+
 export default function ComfortSpot() {
   const { user } = useAuth()
   const [currentId, setCurrentId] = useState(null)
   const [durations, setDurations] = useState({})
+  const [heroLoaded, setHeroLoaded] = useState(false)
   const audioRefs = useRef({})
   const firstTrackId = tracks[0]?.id
   const statLine = 'Listened on repeat since 21 July 2026' // editable
@@ -98,22 +110,6 @@ export default function ComfortSpot() {
     }
   }
 
-  function handleLoadedMetadata(id) {
-    const audio = audioRefs.current[id]
-    if (!audio) return
-    const duration = audio.duration
-    if (!isFinite(duration)) return
-    setDurations((prev) => ({ ...prev, [id]: duration }))
-  }
-
-  function formatDuration(seconds) {
-    if (!isFinite(seconds)) return '--:--'
-    const rounded = Math.round(seconds)
-    const mins = Math.floor(rounded / 60)
-    const secs = rounded % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
   function playFirstTrack() {
     if (firstTrackId) {
       playTrack(firstTrackId)
@@ -151,7 +147,25 @@ export default function ComfortSpot() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="comfort-spot-root min-h-screen text-white">
+      <div className="bubble-layer">
+        {bubbleConfigs.map((bubble, idx) => (
+          <div
+            key={idx}
+            className={`bubble${bubble.text ? ' text' : ''}`}
+            style={{
+              left: bubble.left,
+              width: bubble.size,
+              height: bubble.size,
+              animationDuration: `${bubble.duration}s`,
+              animationDelay: `-${bubble.delay}s`,
+              backgroundColor: bubble.color,
+            }}
+          >
+            {bubble.text}
+          </div>
+        ))}
+      </div>
       <style>{`
         @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 1 } 70% { opacity: 0.9 } 100% { transform: translateY(-300px) scale(1.15); opacity: 0 } }
         @keyframes pulse { 0% { transform: scale(1) } 50% { transform: scale(1.06) } 100% { transform: scale(1) } }
@@ -159,68 +173,98 @@ export default function ComfortSpot() {
         .heart.animate { animation: rise var(--dur, 2600ms) cubic-bezier(.2,.8,.2,1) forwards, pulse 1200ms ease-in-out infinite; }
       `}</style>
       {showLove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={dismissLove} />
-          <div className="relative z-10 w-[92%] max-w-lg rounded-lg bg-[#0B0B0B] p-6 text-center text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+          <div className="absolute inset-0 bg-black/70" onClick={dismissLove} />
+          <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-[#09090b]/90 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl text-white">
             <h3 className="mb-3 text-2xl font-semibold">For Abhi — My Whole Heart 💖</h3>
-            <p className="mb-4 text-sm text-gray-300">Abhi — you are my quiet joy and my loudest comfort. I put this little corner together so you always have a place that feels like home. I love you deeply, now and always.</p>
-            <button onClick={dismissLove} className="mx-auto rounded-full bg-sysblue px-4 py-2 text-sm">Close</button>
+            <p className="mb-4 text-sm text-gray-300">
+              Abhi — you are my quiet joy and my loudest comfort. I put this little corner together so you always have a place that feels like home. I love you deeply, now and always.
+            </p>
+            <button
+              onClick={dismissLove}
+              className="rounded-full bg-sysblue px-4 py-2 text-sm transition hover:scale-[0.98]"
+            >
+              Close
+            </button>
             <Hearts />
           </div>
         </div>
       )}
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <section className="relative mb-8 overflow-hidden rounded-lg">
-          <div className="h-64 w-full bg-gray-900">
-            <img src={heroPhoto} alt="hero" className="h-64 w-full object-cover opacity-80" />
+      <div className="mx-auto relative max-w-6xl px-4 py-8">
+        <section className="hero-card relative mb-8 overflow-hidden rounded-[26px]">
+          <div className="window-controls">
+            <span className="window-dot red" />
+            <span className="window-dot yellow" />
+            <span className="window-dot green" />
           </div>
-          <div className="absolute left-6 bottom-6 flex items-end gap-4">
-            <div>
-              <h1 className="font-display text-[48px] leading-none text-white">My Comfort Spot <span className="ml-2 inline-block text-sm text-green-400">✅ My Favorite Artist</span></h1>
-              <p className="mt-2 text-sm text-gray-300">{statLine}</p>
+          <img
+            src={heroPhoto}
+            alt="hero"
+            className={`hero-image ${heroLoaded ? 'loaded' : ''}`}
+            onLoad={() => setHeroLoaded(true)}
+          />
+          <div className="hero-overlay">
+            <div className="hero-copy">
+              <h1 className={`hero-title page-title text-[48px] leading-none text-white ${heroLoaded ? 'visible' : ''}`}>
+                My Comfort Spot <span className="ml-2 inline-block text-sm text-green-400">✅ My Favorite Artist</span>
+              </h1>
+              <p className={`hero-stat mt-2 text-sm text-gray-300 ${heroLoaded ? 'visible' : ''}`}>{statLine}</p>
             </div>
           </div>
         </section>
 
-        <div className="mb-6 flex items-center gap-4 relative">
-          <button onClick={playFirstTrack} className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-black text-2xl shadow-lg">▶</button>
-          <button className="rounded-full border border-white/10 px-4 py-2 text-sm">My Heart</button>
-          <button className="rounded-full border border-white/10 px-3 py-2 text-sm">...</button>
-          {showHearts && renderHearts()}
+        <div className="action-row">
+          <button onClick={playFirstTrack} className="action-button primary">
+            ▶
+          </button>
+          <button className="action-button secondary">My Heart</button>
+          <button className="action-button secondary">...</button>
         </div>
 
-        {/* Welcome popup removed — credentials saved to workspace file for admin use */}
-
-        <section>
+        <section className="track-list">
           <h2 className="mb-4 text-xl font-semibold">Popular</h2>
-          <div className="space-y-2">
-            {tracks.map((t, idx) => (
-              <div
-                key={t.id}
-                onClick={() => toggleTrack(t.id)}
-                className={`flex cursor-pointer items-center gap-4 rounded-md px-3 py-2 transition-colors ${currentId === t.id ? 'bg-white/6' : 'hover:bg-white/3'}`}
-              >
-                <div className="w-8 text-right text-sm text-gray-400">{idx + 1}</div>
-                <img src={t.art} alt="art" className="h-12 w-12 rounded-sm object-cover" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">{t.title}</p>
-                      <p className="text-xs text-gray-400">Album</p>
+          <div className="space-y-3">
+            {tracks.map((t, idx) => {
+              const isActive = currentId === t.id
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => toggleTrack(t.id)}
+                  className={`track-row ${isActive ? 'active' : ''}`}
+                >
+                  <div className="w-8 text-right text-sm text-gray-400">{idx + 1}</div>
+                  <img src={t.art} alt={`${t.title} art`} className="track-art" />
+                  <div className="track-info">
+                    <div className="track-meta">
+                      <div className="track-title-block">
+                        <div>
+                          <p className="track-title">{t.title}</p>
+                          <p className="track-subtitle">Album</p>
+                        </div>
+                        {isActive && (
+                          <div className="audio-meter" aria-hidden="true">
+                            <span className="equalizer-bar" />
+                            <span className="equalizer-bar" />
+                            <span className="equalizer-bar" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="track-duration">{formatDuration(durations[t.id])}</div>
                     </div>
-                    <div className="text-sm text-gray-400">{formatDuration(durations[t.id])}</div>
                   </div>
-                </div>
-                <div className="w-6 text-right text-gray-400">{currentId === t.id ? '⏸' : '▶'}</div>
+                  <div className={`track-icon transition ${isActive ? 'playing' : ''}`}>
+                    {isActive ? '⏸' : '▶'}
+                  </div>
 
-                <audio
-                  ref={(el) => (audioRefs.current[t.id] = el)}
-                  src={t.src}
-                  preload="metadata"
-                  onLoadedMetadata={() => handleLoadedMetadata(t.id)}
-                />
-              </div>
-            ))}
+                  <audio
+                    ref={(el) => (audioRefs.current[t.id] = el)}
+                    src={t.src}
+                    preload="metadata"
+                    onLoadedMetadata={() => handleLoadedMetadata(t.id)}
+                  />
+                </div>
+              )
+            })}
           </div>
         </section>
       </div>
