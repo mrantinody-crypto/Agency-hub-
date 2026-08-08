@@ -9,20 +9,37 @@ const heroPhoto = '/images/his-photo.webp'
 const unlockCredentials = { id: 'abhinavchauhan26@gmail.com', pass: 'ABHI1234' }
 
 const tracks = [
-  { id: 1, title: 'Track Name 1', duration: '3:20', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', art: '/images/art1.webp' },
-  { id: 2, title: 'Track Name 2', duration: '2:58', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', art: '/images/art2.webp' },
-  { id: 3, title: 'Track Name 3', duration: '3:05', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', art: '/images/art3.webp' },
-  { id: 4, title: 'Track Name 4', duration: '4:10', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', art: '/images/art4.webp' },
-  { id: 5, title: 'Track Name 5', duration: '3:44', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', art: '/images/art5.webp' },
+  { id: 1, title: 'Raabta', src: '/audio/raabta.mp3', art: '/images/art-1.webp' },
+  { id: 2, title: 'Arz Kiya Hai', src: '/audio/arz-kiya-hai.mp3', art: '/images/art-2.webp' },
+  { id: 3, title: 'Mere Nishaan', src: '/audio/mere-nishaan.mp3', art: '/images/art-3.webp' },
+  { id: 4, title: 'Zaalima', src: '/audio/zaalima.mp3', art: '/images/art-4.webp' },
+  { id: 5, title: 'Darkhaast', src: '/audio/darkhaast.mp3', art: '/images/art-5.webp' },
 ]
 
 export default function ComfortSpot() {
   const { user } = useAuth()
   const [currentId, setCurrentId] = useState(null)
+  const [durations, setDurations] = useState({})
   const audioRefs = useRef({})
   const firstTrackId = tracks[0]?.id
   const statLine = 'Listened on repeat since 21 July 2026' // editable
   const [showLove, setShowLove] = useState(false)
+
+  function handleLoadedMetadata(id) {
+    const audio = audioRefs.current[id]
+    if (!audio) return
+    const duration = audio.duration
+    if (!isFinite(duration)) return
+    setDurations((prev) => ({ ...prev, [id]: duration }))
+  }
+
+  function formatDuration(seconds) {
+    if (!isFinite(seconds)) return '--:--'
+    const rounded = Math.round(seconds)
+    const mins = Math.floor(rounded / 60)
+    const secs = rounded % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   useEffect(() => {
     const abhiEmail = 'abhinavchauhan26@gmail.com'
@@ -79,6 +96,22 @@ export default function ComfortSpot() {
     } else {
       playTrack(id)
     }
+  }
+
+  function handleLoadedMetadata(id) {
+    const audio = audioRefs.current[id]
+    if (!audio) return
+    const duration = audio.duration
+    if (!isFinite(duration)) return
+    setDurations((prev) => ({ ...prev, [id]: duration }))
+  }
+
+  function formatDuration(seconds) {
+    if (!isFinite(seconds)) return '--:--'
+    const rounded = Math.round(seconds)
+    const mins = Math.floor(rounded / 60)
+    const secs = rounded % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   function playFirstTrack() {
@@ -175,12 +208,17 @@ export default function ComfortSpot() {
                       <p className="text-sm font-medium">{t.title}</p>
                       <p className="text-xs text-gray-400">Album</p>
                     </div>
-                    <div className="text-sm text-gray-400">{t.duration}</div>
+                    <div className="text-sm text-gray-400">{formatDuration(durations[t.id])}</div>
                   </div>
                 </div>
                 <div className="w-6 text-right text-gray-400">{currentId === t.id ? '⏸' : '▶'}</div>
 
-                <audio ref={(el) => (audioRefs.current[t.id] = el)} src={t.src} preload="none" />
+                <audio
+                  ref={(el) => (audioRefs.current[t.id] = el)}
+                  src={t.src}
+                  preload="metadata"
+                  onLoadedMetadata={() => handleLoadedMetadata(t.id)}
+                />
               </div>
             ))}
           </div>
