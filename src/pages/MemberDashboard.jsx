@@ -93,7 +93,7 @@ export default function MemberDashboard() {
         <div className="px-5 py-4 border-b border-hairline">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-display text-[20px] leading-tight text-ink-primary">Anti Agency Hub</p>
+              <p className="font-display text-[20px] leading-tight text-ink-primary">Noor Agency Hub</p>
               <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Welcome'}</p>
               <p className="label-caps mt-0.5">{isTeam ? 'Designer' : 'Client'}</p>
             </div>

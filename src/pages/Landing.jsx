@@ -20,7 +20,25 @@ export default function Landing() {
   useEffect(() => {
     async function load() {
       const { data } = await supabase.from('projects_public').select('*').order('created_at', { ascending: false })
-      setProjects(data || [])
+      let list = data || []
+      // Ensure the local "My Comfort Spot" project is present for the landing page
+      const comfortSlug = 'comfort-spot'
+      const hasComfort = list.find((p) => p.slug === comfortSlug)
+      if (!hasComfort) {
+        list = [
+          ...list,
+          {
+            id: comfortSlug,
+            slug: comfortSlug,
+            title: "My Comfort Spot",
+            tagline: 'A little corner just for him',
+            route: '/comfort-spot',
+            status: 'live',
+            cover_color: '#7C3AED',
+          },
+        ]
+      }
+      setProjects(list)
       setLoading(false)
     }
     load()
@@ -62,9 +80,9 @@ export default function Landing() {
         <header className="rounded-[28px] border border-white/10 bg-[#0A0A0A] px-6 py-6 shadow-2xl shadow-black/40 sm:px-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-[#A3A3A3]">Personal digital space</p>
+              <p className="text-[11px] uppercase tracking-[0.3em] text-[#A3A3A3]">PERSONAL DIGITAL SPACE</p>
               <h1 className="mt-2 font-display text-[40px] leading-none text-[#F5F5F5] sm:text-[52px]">
-                Anti&apos;s Digital Space
+                Noor&apos;s Digital Space
               </h1>
               <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[#A3A3A3]">
                 A curated collection of private work, experiments, and client spaces — each one locked behind a simple passcode.

@@ -46,13 +46,13 @@ export default function Login() {
           </button>
         </div>
         <div className="mac-window shadow-pop overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-hairline flex items-center gap-2 bg-sidebar rounded-t-window">
+            <div className="px-5 py-3.5 border-b border-hairline flex items-center gap-2 bg-sidebar rounded-t-window">
             <div className="traffic-lights">
               <span className="traffic-dot bg-traffic-red" />
               <span className="traffic-dot bg-traffic-yellow" />
               <span className="traffic-dot bg-traffic-green" />
             </div>
-            <span className="text-[13px] text-ink-secondary mx-auto pr-10">Anti Agency Hub — Sign in</span>
+            <span className="text-[13px] text-ink-secondary mx-auto pr-10">Noor Agency Hub — Sign in</span>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">

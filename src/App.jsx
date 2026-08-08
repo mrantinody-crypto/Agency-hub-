@@ -5,6 +5,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import MemberDashboard from './pages/MemberDashboard'
 import Landing from './pages/Landing'
 import HubAdmin from './pages/HubAdmin'
+import ComfortSpot from './pages/ComfortSpot'
 
 function SplashLoading() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/comfort-spot" element={<ComfortSpot />} />
         <Route path="/hub-admin" element={<HubAdmin />} />
         <Route path="/agency-hub/*" element={<AgencyHubRoutes />} />
       </Routes>
