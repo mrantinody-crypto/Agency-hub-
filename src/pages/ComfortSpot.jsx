@@ -2,18 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 // Replace these with real files in `public/images` and `public/audio` later
-const heroPhoto = '/images/his-photo.svg'
+const heroPhoto = '/images/his-photo.webp'
 
 // Use local SVG placeholders for art; audio uses an external placeholder MP3 which you can replace
 // Credentials editable here (saved to workspace file)
 const unlockCredentials = { id: 'abhinavchauhan26@gmail.com', pass: 'ABHI1234' }
 
 const tracks = [
-  { id: 1, title: 'Comfort Track 1', duration: '3:20', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', art: '/images/art1.svg' },
-  { id: 2, title: 'Comfort Track 2', duration: '2:58', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', art: '/images/art2.svg' },
-  { id: 3, title: 'Comfort Track 3', duration: '4:01', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', art: '/images/art3.svg' },
-  { id: 4, title: 'Comfort Track 4', duration: '3:45', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', art: '/images/art1.svg' },
-  { id: 5, title: 'Comfort Track 5', duration: '2:50', src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', art: '/images/art2.svg' },
+  { id: 1, title: 'Track Name 1', duration: '3:20', src: '/audio/track-1.mp3', art: '/images/art-1.webp' },
+  { id: 2, title: 'Track Name 2', duration: '2:58', src: '/audio/track-2.mp3', art: '/images/art-2.webp' },
+  { id: 3, title: 'Track Name 3', duration: '3:05', src: '/audio/track-3.mp3', art: '/images/art-3.webp' },
+  { id: 4, title: 'Track Name 4', duration: '4:10', src: '/audio/track-4.mp3', art: '/images/art-4.webp' },
+  { id: 5, title: 'Track Name 5', duration: '3:44', src: '/audio/track-5.mp3', art: '/images/art-5.webp' },
 ]
 
 export default function ComfortSpot() {
