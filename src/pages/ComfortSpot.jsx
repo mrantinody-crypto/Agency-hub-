@@ -50,6 +50,8 @@ export default function ComfortSpot() {
     }
   }, [])
 
+  const [showHearts, setShowHearts] = useState(false)
+
   function playTrack(id) {
     const prev = currentId
     if (prev && audioRefs.current[prev]) {
@@ -60,7 +62,11 @@ export default function ComfortSpot() {
     if (!audio) return
     audio.play()
     setCurrentId(id)
-    audio.onended = () => setCurrentId(null)
+    setShowHearts(true)
+    audio.onended = () => {
+      setCurrentId(null)
+      setShowHearts(false)
+    }
   }
 
   function toggleTrack(id) {
@@ -69,29 +75,44 @@ export default function ComfortSpot() {
     if (currentId === id) {
       audio.pause()
       setCurrentId(null)
+      setShowHearts(false)
     } else {
       playTrack(id)
     }
   }
 
-  function playFirst() {
+  function playFirstTrack() {
+    if (firstTrackId) {
+      playTrack(firstTrackId)
+    }
+  }
+
+  function renderHearts() {
     const seeds = [0.06, 0.18, 0.32, 0.46, 0.62, 0.78, 0.9]
     return (
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {seeds.map((s, i) => {
           const size = 20 + (i % 4) * 6
-          const dur = 2400 + (i * 300)
+          const dur = 2400 + i * 300
           const left = `${s * 100}%`
           return (
             <span
               key={i}
-              className={`heart animate`}
-              style={{ left, ['--size']: `${size}px`, ['--dur']: `${dur}ms` }}
+              className="heart animate"
+              style={{ left, '--size': `${size}px`, '--dur': `${dur}ms` }}
             >
               ❤️
             </span>
           )
         })}
+      </div>
+    )
+  }
+
+  function Hearts() {
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {renderHearts()}
       </div>
     )
   }
@@ -128,10 +149,11 @@ export default function ComfortSpot() {
           </div>
         </section>
 
-        <div className="mb-6 flex items-center gap-4">
-          <button onClick={playFirst} className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-black text-2xl shadow-lg">▶</button>
+        <div className="mb-6 flex items-center gap-4 relative">
+          <button onClick={playFirstTrack} className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500 text-black text-2xl shadow-lg">▶</button>
           <button className="rounded-full border border-white/10 px-4 py-2 text-sm">My Heart</button>
           <button className="rounded-full border border-white/10 px-3 py-2 text-sm">...</button>
+          {showHearts && renderHearts()}
         </div>
 
         {/* Welcome popup removed — credentials saved to workspace file for admin use */}

@@ -91,6 +91,13 @@ if (supabaseUrl && supabaseAnonKey) {
   // Export a safe stub with in-memory auth + profiles for local dev
   const users = new Map() // email -> { id, email, password }
   const profiles = new Map() // id -> profile object { id, full_name, role }
+  const tables = {
+    projects_public: new Map(),
+    projects: new Map(),
+    clients: new Map(),
+    tasks: new Map(),
+    client_members: new Map(),
+  }
   let currentSession = null
   const listeners = new Set()
 
@@ -99,47 +106,147 @@ if (supabaseUrl && supabaseAnonKey) {
   }
 
   // Simple seeded users (will be overwritten by seeding below)
-  function seedUser({ id, email, password, full_name, role }) {
+  const seedUser = ({ id, email, password, full_name, role }) => {
     users.set(email, { id, email, password })
-    profiles.set(id, { id, full_name: full_name || full_name || email.split('@')[0], role: role || 'team' })
+    profiles.set(id, {
+      id,
+      full_name: full_name || email.split('@')[0],
+      role: role || 'team',
+    })
   }
 
-  // Provide a builder that can handle basic select/eq/single/insert behavior
+  function getRows(table) {
+    if (table === 'profiles') return Array.from(profiles.values())
+    const tableMap = tables[table]
+    if (!tableMap) return []
+    return Array.from(tableMap.values())
+  }
+
+  function applyFilters(rows, filters) {
+    return rows.filter((row) =>
+      filters.every((filter) => {
+        const value = row[filter.field]
+        if (filter.type === 'eq') return value === filter.value
+        if (filter.type === 'in') return Array.isArray(filter.values) && filter.values.includes(value)
+        return true
+      })
+    )
+  }
+
   function makeBuilderFor(table) {
-    const state = { table, filters: {} }
+    const state = { table, filters: [], order: null, action: 'select', payload: null }
     const chain = {}
+
     chain.select = () => chain
-    chain.order = () => ({ data: [] })
-    chain.in = () => chain
+    chain.order = (column, options = {}) => {
+      state.order = { column, ascending: options?.ascending ?? true }
+      return chain
+    }
+    chain.in = (field, values) => {
+      state.filters.push({ type: 'in', field, values })
+      return chain
+    }
     chain.eq = (field, value) => {
-      state.filters[field] = value
+      state.filters.push({ type: 'eq', field, value })
+      return chain
+    }
+    chain.insert = (payload) => {
+      state.action = 'insert'
+      state.payload = payload
+      return chain
+    }
+    chain.update = (payload) => {
+      state.action = 'update'
+      state.payload = payload
+      return chain
+    }
+    chain.delete = () => {
+      state.action = 'delete'
       return chain
     }
     chain.single = async () => {
-      if (state.table === 'profiles') {
-        const id = state.filters.id
-        const p = profiles.get(id) || null
-        return { data: p, error: null }
-      }
-      if (state.table === 'projects_public') {
-        return { data: [], error: null }
-      }
-      return { data: null, error: null }
+      const result = await chain.execute()
+      return { data: Array.isArray(result.data) ? result.data[0] || null : null, error: result.error }
     }
-    chain.insert = async (payload) => {
-      if (state.table === 'profiles') {
-        const p = Array.isArray(payload) ? payload[0] : payload
-        profiles.set(p.id, p)
-        return { data: [p], error: null }
+    chain.execute = async () => {
+      const rows = getRows(state.table)
+      const filtered = applyFilters(rows, state.filters)
+
+      if (state.action === 'insert') {
+        const payloads = Array.isArray(state.payload) ? state.payload : [state.payload]
+        const inserted = payloads.map((row) => {
+          const id = row.id || `${state.table}-${Math.random().toString(36).slice(2, 9)}`
+          const value = { id, ...row }
+          if (state.table === 'profiles') {
+            profiles.set(id, value)
+          } else {
+            const tableMap = tables[state.table]
+            if (tableMap) tableMap.set(id, value)
+          }
+          return value
+        })
+        return { data: inserted, error: null }
       }
-      return { data: [], error: null }
+
+      if (state.action === 'update') {
+        const updates = state.payload || {}
+        const updated = filtered.map((row) => {
+          const value = { ...row, ...updates }
+          if (state.table === 'profiles') {
+            profiles.set(value.id, value)
+          } else {
+            const tableMap = tables[state.table]
+            if (tableMap) tableMap.set(value.id, value)
+          }
+          return value
+        })
+        return { data: updated, error: null }
+      }
+
+      if (state.action === 'delete') {
+        const deleted = filtered.map((row) => {
+          if (state.table === 'profiles') {
+            profiles.delete(row.id)
+          } else {
+            const tableMap = tables[state.table]
+            if (tableMap) tableMap.delete(row.id)
+          }
+          return row
+        })
+        return { data: deleted, error: null }
+      }
+
+      let result = filtered
+      if (state.order && state.order.column) {
+        result = [...result].sort((a, b) => {
+          const left = a[state.order.column]
+          const right = b[state.order.column]
+          if (left == null) return 1
+          if (right == null) return -1
+          if (left < right) return state.order.ascending ? -1 : 1
+          if (left > right) return state.order.ascending ? 1 : -1
+          return 0
+        })
+      }
+      return { data: result, error: null }
     }
+
+    chain.then = (resolve, reject) => chain.execute().then(resolve, reject)
     return chain
   }
 
   supabase = {
     from: (table) => makeBuilderFor(table),
-    rpc: async () => ({ data: null, error: null }),
+    rpc: async (fn, params) => {
+      if (fn === 'check_project_code') {
+        const code = String(params?.p_code || '').trim()
+        if (params?.p_slug === 'comfort-spot' && code.toUpperCase() === 'NOOR678') {
+          return { data: true, error: null }
+        }
+        return { data: false, error: null }
+      }
+      return { data: null, error: null }
+    },
     auth: {
       getSession: async () => ({ data: { session: currentSession } }),
       onAuthStateChange: (cb) => {

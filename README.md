@@ -1,4 +1,4 @@
-# Anti Agency Hub
+# Noor Agency Hub
 
 A private, macOS-styled control panel for managing unlimited client brands — contact info,
 socials, calendar, scripts, linked docs/sheets, and tasks — with three access levels:
