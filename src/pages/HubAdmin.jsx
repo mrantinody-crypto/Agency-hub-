@@ -14,6 +14,17 @@ const EMPTY_FORM = {
   status: 'draft',
 }
 
+const DEFAULT_PROJECT = {
+  title: 'My Comfort Spot',
+  slug: 'comfort-spot',
+  tagline: 'A little corner just for him',
+  description: 'A little corner just for him',
+  route: '/comfort-spot',
+  access_code: 'NOOR678',
+  cover_color: '#7C3AED',
+  status: 'live',
+}
+
 export default function HubAdmin() {
   const { session, profile, loading, isAdmin } = useAuth()
   const navigate = useNavigate()
@@ -27,8 +38,29 @@ export default function HubAdmin() {
     setProjects(data || [])
   }
 
+  async function ensureDefaultProject() {
+    try {
+      const { data } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('slug', DEFAULT_PROJECT.slug)
+        .single()
+
+      if (!data) {
+        await supabase.from('projects').insert(DEFAULT_PROJECT)
+      }
+    } catch (err) {
+      console.warn('Unable to ensure default comfort-spot project:', err)
+    }
+  }
+
   useEffect(() => {
-    if (session && isAdmin) loadProjects()
+    if (session && isAdmin) {
+      ;(async () => {
+        await ensureDefaultProject()
+        loadProjects()
+      })()
+    }
   }, [session, isAdmin])
 
   if (loading) return <div className="min-h-screen bg-canvas p-8 text-[14px] text-ink-secondary">Loading…</div>
