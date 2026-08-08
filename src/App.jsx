@@ -25,7 +25,7 @@ function Gate({ children }) {
 function RoleRouter() {
   const { profile, loading } = useAuth()
   if (loading || !profile) return <SplashLoading />
-  if (profile.role === 'admin') return <AdminDashboard />
+  if (profile.role === 'admin' || profile.role === 'owner') return <AdminDashboard />
   return <MemberDashboard />
 }
 

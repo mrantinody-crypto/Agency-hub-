@@ -52,7 +52,7 @@ export default function AccountPanel() {
     }
   }
 
-  const roleLabel = profile?.role === 'admin' ? 'Admin' : profile?.role === 'team' ? 'Designer' : 'Client'
+  const roleLabel = profile?.role === 'admin' ? 'Admin' : profile?.role === 'owner' ? 'Owner' : profile?.role === 'team' ? 'Designer' : 'Client'
 
   return (
     <div className="max-w-3xl space-y-6">

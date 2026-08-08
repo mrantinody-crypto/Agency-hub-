@@ -20,6 +20,16 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      ;['profile', 'user', 'auth_profile', 'user_profile'].forEach((key) => {
+        if (window.localStorage.getItem(key) || window.sessionStorage.getItem(key)) {
+          window.localStorage.removeItem(key)
+          window.sessionStorage.removeItem(key)
+          console.debug(`Cleared stale auth cache key: ${key}`)
+        }
+      })
+    }
+
     let mounted = true
     let settled = false
 
@@ -79,9 +89,10 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     profile,
     loading,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: profile?.role === 'admin' || profile?.role === 'owner',
+    isOwner: profile?.role === 'owner',
     isTeam: profile?.role === 'team',
-    isClient: profile?.role === 'client',
+    isClient: profile?.role !== 'admin' && profile?.role !== 'owner' && profile?.role !== 'team',
     signOut: () => supabase.auth.signOut().then(() => {
       window.location.assign('/agency-hub/login')
     }),

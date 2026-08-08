@@ -95,7 +95,9 @@ export default function MemberDashboard() {
             <div>
               <p className="font-display text-[20px] leading-tight text-ink-primary">Noor Agency Hub</p>
               <p className="text-[13px] font-medium text-ink-primary mt-1">{profile?.full_name || 'Welcome'}</p>
-              <p className="label-caps mt-0.5">{isTeam ? 'Designer' : 'Client'}</p>
+              <p className="label-caps mt-0.5">
+                {profile?.role === 'admin' ? 'Admin' : profile?.role === 'owner' ? 'Owner' : isTeam ? 'Designer' : 'Client'}
+              </p>
             </div>
             <NotificationBell tasks={tasks} />
           </div>
